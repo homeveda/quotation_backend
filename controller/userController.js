@@ -55,9 +55,7 @@ const registerAdmin = async (req, res) => {
     }catch(err){
         res.status(500).json({message: "Server Error"});
     }
-}
-
-
+};
 
 const loginUser = async (req, res) => {
     try {
@@ -124,15 +122,8 @@ const updateUserDetails = async(req,res)=>{
     }catch(err){
         res.status(500).json({message: "Server Error"});
     }   
-}   
+};
 
-const forgotPassword = async(req,res)=>{
-    try{
-
-    }catch(err){
-        res.status(500).json({message: "Server Error"});
-    }
-}
 
 const getUserDetails = async(req,res)=>{
     try{
@@ -171,4 +162,73 @@ const getAllUsers = async(req,res)=>{
     }
 };
 
-export { registerUser, registerAdmin,getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers };
+//Node mailer transporter setup
+
+const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
+const forgotPassword = async(req,res)=>{
+    try{
+        const { email } = req.body;
+        // Find user by email
+        const user = await User.findOne({ email });
+
+        if(!user){
+            return res.status(400).json({ message: "User not found" });
+        }
+
+        // Generating reset token for 15 minutes
+        const token = jwt.sign({email:user.email}, process.env.JWT_SECRET || "defaultsecret", {expiresIn: '15min'} );
+
+        // Store the token and its expiry in the database for single use
+        user.resetToken = token;
+        user.resetTokenExpiry = Date.now() + 15*60*1000; // 15 minutes from now
+        // Saving details in database
+        await user.save();
+
+        // Send email with reset link
+        const resetLink = `${process.env.CLIENT_URL || "http://localhost:3000"}/reset-password?token=${token}`;
+        // Mailing 
+        const mail = await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: user.email,
+            subject: "Password Reset - HomeVeda",
+            html: `<p>You requested for password reset. Click <a href="${resetLink}">here</a> to reset your password. This link is valid for 15 minutes.</p>`
+        });
+
+        res.status(200).json({message: "Password reset link sent to your email."});
+    }catch(err){
+        res.status(500).json({message: "Server Error"});
+    }
+}
+
+const resetPassword = async(req,res)=>{
+    try{
+        const { token } = req.params;
+        const { newPassword } = req.body;
+
+        const decode = jwt.verify(token, process.env.JWT_SECRET || "defaultsecret");
+        const user = await User.findOne({ email: decode.email, resetToken: token, resetTokenExpiry: { $gt: Date.now() } });
+
+        if(!user){
+            return res.status(400).json({ message: "Invalid or expired token" });
+        }
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        user.resetToken = undefined;
+        user.resetTokenExpiry = undefined;
+        await user.save();
+        res.status(200).json({ message: "Password reset successfully" });
+    }catch(err){
+        res.status(500).json({message: "Server Error"});
+    }
+}
+
+
+export { registerUser, registerAdmin, getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers,loginUser, resetPassword ,forgotPassword };
