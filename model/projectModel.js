@@ -1,0 +1,22 @@
+import { Schema } from "mongoose";
+
+const projectSchema = new Schema({
+    id:{
+        type: UUID,
+        default: UUIDV4,
+        primaryKey: true
+    },
+    userEmail: {
+        type: String,
+        required: true,
+        ref: "User", // Reference to User model's email field
+    },
+    category:{
+        type : String,
+        enum : ["Builder","Economy","Standard","VedaX"]
+    }
+});
+
+const Project = model("Project", projectSchema);
+
+export default Project;
