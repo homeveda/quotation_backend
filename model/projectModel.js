@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import mongoose,{ Schema } from "mongoose";
 
 const projectSchema = new Schema({
     id:{
@@ -17,6 +17,6 @@ const projectSchema = new Schema({
     }
 });
 
-const Project = model("Project", projectSchema);
+const Project = new mongoose.model("Project", projectSchema);
 
 export default Project;

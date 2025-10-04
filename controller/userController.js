@@ -1,4 +1,4 @@
-import bcrypt from bcryptjs;
+import bcrypt from "bcrypt";
 import User from "../model/userModel.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
@@ -13,7 +13,7 @@ const registerUser = async (req, res) => {
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if(existingUser){
-            return res.status(400).json({ message: "User already exists" });
+            return res.status(409).json({ message: "User already exists" });
         }
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -38,7 +38,7 @@ const registerAdmin = async (req, res) => {
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if(existingUser){
-            return res.status(400).json({ message: "User already exists" });
+            return res.status(409).json({ message: "User already exists" });
         }
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -53,6 +53,7 @@ const registerAdmin = async (req, res) => {
         await newUser.save();
         res.status(201).json({ message: "Admin user registered successfully" });
     }catch(err){
+        console.log(err);
         res.status(500).json({message: "Server Error"});
     }
 };
@@ -78,6 +79,7 @@ const loginUser = async (req, res) => {
         );
         res.status(200).json({ message: "Login successful", token });
     } catch (err) {
+        console.log(err);
         res.status(500).json({ message: "Server Error" });
     }
 };
@@ -101,6 +103,7 @@ const changePassword = async(req,res)=>{
         await user.save();
         res.status(200).json({ message: "Password changed successfully" });
     }catch(err){
+        console.log(err);
         res.status(500).json({message: "Server Error"});
     }
 }
@@ -120,6 +123,7 @@ const updateUserDetails = async(req,res)=>{
         await user.save();
         res.status(200).json({ message: "User details updated successfully" });
     }catch(err){
+        console.log(err);
         res.status(500).json({message: "Server Error"});
     }   
 };
@@ -135,6 +139,7 @@ const getUserDetails = async(req,res)=>{
         }
         res.status(200).json({ user });
     }catch(err){
+        console.log(err);
         res.status(500).json({message: "Server Error"});
     }
 };
@@ -149,6 +154,7 @@ const deleteUser = async(req,res)=>{
         }
         res.status(200).json({ message: "User deleted successfully" });
     }catch(err){
+        console.log(err);
         res.status(500).json({message: "Server Error"});
     }
 };
@@ -158,6 +164,7 @@ const getAllUsers = async(req,res)=>{
         const users = await User.find({});
         res.status(200).json({ users });
     }catch(err){
+        console.log(err);
         res.status(500).json({message: "Server Error"});
     }
 };
@@ -192,7 +199,7 @@ const forgotPassword = async(req,res)=>{
         await user.save();
 
         // Send email with reset link
-        const resetLink = `${process.env.CLIENT_URL || "http://localhost:3000"}/reset-password?token=${token}`;
+        const resetLink = `${process.env.CLIENT_URL || "http://localhost:3000"}/reset-password/${token}`;
         // Mailing 
         const mail = await transporter.sendMail({
             from: process.env.EMAIL_USER,
@@ -203,6 +210,7 @@ const forgotPassword = async(req,res)=>{
 
         res.status(200).json({message: "Password reset link sent to your email."});
     }catch(err){
+        console.log(err);
         res.status(500).json({message: "Server Error"});
     }
 }
@@ -226,9 +234,10 @@ const resetPassword = async(req,res)=>{
         await user.save();
         res.status(200).json({ message: "Password reset successfully" });
     }catch(err){
+        console.log(err);
         res.status(500).json({message: "Server Error"});
     }
 }
 
 
-export { registerUser, registerAdmin, getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers,loginUser, resetPassword ,forgotPassword };
+export { registerUser, registerAdmin, getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers, loginUser, resetPassword };

@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import mongoose,{ Schema } from "mongoose";
 
 const userSchema = new Schema({
   name: {
@@ -29,11 +29,9 @@ const userSchema = new Schema({
   },
   resetTokenExpiry:{
     type: Date,
-  },
-  timestamps: true,
-  
-});
+  }
+}, { timestamps: true });
 
-const User = model("User", userSchema);
+const User = new mongoose.model("User", userSchema);
 
 export default User;

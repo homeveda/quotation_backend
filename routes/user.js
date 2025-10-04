@@ -1,6 +1,6 @@
 import { Router } from "express";
 const userRouter = Router();
-import { registerUser, registerAdmin, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers,loginUser  } from "../controllers/user.js";
+import { registerUser, registerAdmin, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers, loginUser, resetPassword } from "../controller/userController.js";
 
 userRouter.post('/', registerUser);
 
@@ -18,6 +18,6 @@ userRouter.get('/all', getAllUsers);
 
 userRouter.post('/forgot-password', forgotPassword);
 
-userRouter.post('/reset-password', resetPassword);
+userRouter.post('/reset-password/:token', resetPassword);
 
 export default userRouter;
