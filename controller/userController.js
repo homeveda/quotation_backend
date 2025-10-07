@@ -239,5 +239,18 @@ const resetPassword = async(req,res)=>{
     }
 }
 
+const userDetails = async(req,res)=>{
+    try{
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+        if(!user){
+            return res.status(400).json({ message: "User not found" });
+        }
+        res.status(200).json({ user });
+    }catch(err){
+        console.log(err);
+        res.status(500).json({message: "Server Error"});
+    }
+}
 
-export { registerUser, registerAdmin, getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers, loginUser, resetPassword };
+export { registerUser, registerAdmin, getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers, loginUser, resetPassword, userDetails };

@@ -11,6 +11,9 @@ const projectSchema = new Schema({
         required: true,
         ref: "User", // Reference to User model's email field
     },
+    architectName: {
+        type: String,
+    },
     category:{
         type : String,
         enum : ["Builder","Economy","Standard","VedaX"]
