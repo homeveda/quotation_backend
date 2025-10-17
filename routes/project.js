@@ -1,6 +1,6 @@
 import { Router } from "express";
 const projectRouter = Router();
-import { getProjectsOfUser, createProject, updateProject, getProjectDetails, deleteProject } from "../controller/projectController";
+import { getProjectsOfUser, createProject, updateProject, getProjectDetails, deleteProject } from "../controller/projectController.js";
 
 projectRouter.get("/user", getProjectsOfUser);
 

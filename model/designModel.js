@@ -1,4 +1,4 @@
-import mongoose,{Schema} from mongoose;
+import mongoose,{Schema} from "mongoose";
 
 const itemSchema = new Schema({
     name: { type: String, required: true },
@@ -15,7 +15,7 @@ const itemSchema = new Schema({
 
 const designSchema = new Schema({
     projectId: {
-        type: UUID,
+        type: "String",
         required: true,
         ref: "Project", // Reference to Project model's id field
     },

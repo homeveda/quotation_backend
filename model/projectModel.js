@@ -2,8 +2,7 @@ import mongoose,{ Schema } from "mongoose";
 
 const projectSchema = new Schema({
     id:{
-        type: UUID,
-        default: UUIDV4,
+        type: "String",
         primaryKey: true
     },
     userEmail: {

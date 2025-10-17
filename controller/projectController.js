@@ -1,4 +1,4 @@
-import Project from "../model/projectModel";
+import Project from "../model/projectModel.js";
 import { v4 as UUIDV4} from 'uuid';
 const getProjectsOfUser = async (req, res) => {
     try {

@@ -17,7 +17,7 @@ const itemSchema = new Schema(
 const quotationSchema = new Schema(
     {
         projectId: {
-            type: Schema.Types.ObjectId,
+            type: "String",
             ref: "Project",
             required: true
         },

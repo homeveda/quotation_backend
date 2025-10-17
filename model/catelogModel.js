@@ -38,12 +38,6 @@ catelogSchema.pre('validate', function(next) {
     next();
   }
 });
-
-// Virtual to suggest media folder based on category
-catelogSchema.virtual('mediaFolder').get(function() {
-  return `media/${this.category.toLowerCase()}`;
-});
-
 const Catelog = mongoose.model("Catelog", catelogSchema);
 
 export default Catelog;

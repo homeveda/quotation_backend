@@ -1,4 +1,4 @@
-import Quotation from "../model/quotationModel";
+import Quotation from "../model/quotationModel.js";
 
 const getQuotations = async (req, res) => {
     try {
