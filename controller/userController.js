@@ -84,6 +84,33 @@ const loginUser = async (req, res) => {
     }
 };
 
+
+const loginAdmin = async (req, res) => {
+    try{
+        const { email, password } = req.body;
+        // Find user by email
+        const user = await User.findOne({ email, isAdmin: true });
+        if(!user){
+            return res.status(400).json({ message: "Invalid email or password" });
+        }
+        // Compare password
+        const isMatch = await bcrypt.compare(password, user.password);
+        if(!isMatch){
+            return res.status(400).json({ message: "Invalid email or password" });
+        }
+        // Generate JWT
+        const token = jwt.sign(
+            { userId: user._id, email: user.email, isAdmin: user.isAdmin },
+            process.env.JWT_SECRET || "defaultsecret",
+            { expiresIn: "2d" }
+        );
+        res.status(200).json({ message: "Admin login successful", token });
+    }catch(err){
+        console.log(err);
+        res.status(500).json({message: "Server Error"});
+    }
+}
+
 const changePassword = async(req,res)=>{
     try{
         const { email, oldPassword, newPassword } = req.body;
@@ -107,6 +134,8 @@ const changePassword = async(req,res)=>{
         res.status(500).json({message: "Server Error"});
     }
 }
+
+
 
 const updateUserDetails = async(req,res)=>{
     try{
@@ -253,4 +282,4 @@ const userDetails = async(req,res)=>{
     }
 }
 
-export { registerUser, registerAdmin, getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers, loginUser, resetPassword, userDetails };
+export { registerUser, registerAdmin, getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers, loginUser ,loginAdmin, resetPassword, userDetails };

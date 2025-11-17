@@ -14,6 +14,10 @@ const catelogSchema = new Schema({
   video: {
     type: String,
   },
+  workType:{
+    type: String, 
+    enum: ["Wood Work","Main Hardware","Other Hardware","Miscellaneous"],
+  },
   category: {
     type: String,
     enum: ["Builder", "Economy", "Standard", "VedaX"],

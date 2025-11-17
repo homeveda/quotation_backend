@@ -1,4 +1,4 @@
-import {createCatelog, getAllCatelogs, getCatelogByName, deleteCatelog} from '../controller/categlogController.js'
+import {createCatelog, getAllCatelogs, getCatelogByName, deleteCatelog, updateCatelog} from '../controller/categlogController.js'
 
 import { Router } from "express";
 import { catelogUpload } from '../middleware/uploadMiddleware.js';
@@ -13,4 +13,6 @@ catelogRouter.get('/', getAllCatelogs);
 catelogRouter.get('/:name', getCatelogByName);
 // Delete catelog by name
 catelogRouter.delete('/:name', deleteCatelog);
+//Update catelog
+catelogRouter.patch('/:name', catelogUpload, updateCatelog);
 export default catelogRouter;

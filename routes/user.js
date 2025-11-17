@@ -1,6 +1,6 @@
 import { Router } from "express";
 const userRouter = Router();
-import { registerUser, registerAdmin, changePassword, updateUserDetails,userDetails, forgotPassword, deleteUser, getAllUsers, loginUser, resetPassword } from "../controller/userController.js";
+import { registerUser, registerAdmin, changePassword, updateUserDetails,userDetails, forgotPassword, deleteUser, getAllUsers, loginUser,loginAdmin, resetPassword } from "../controller/userController.js";
 
 // Register user
 userRouter.post('/', registerUser);
@@ -26,5 +26,7 @@ userRouter.get('/', userDetails);
 
 // Get all users
 userRouter.get('/all', getAllUsers);
+
+userRouter.post('/admin/login', loginAdmin);
 
 export default userRouter;
