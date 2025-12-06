@@ -1,15 +1,18 @@
 import { Router } from "express";
 const projectRouter = Router();
+import uploadMesurments from "../middleware/uploadMeasurmentMiddleware.js";
 import { getProjectsOfUser, createProject, updateProject, getProjectDetails, deleteProject } from "../controller/projectController.js";
 
+// List projects for a user (query param `userEmail`)
 projectRouter.get("/user", getProjectsOfUser);
 
-projectRouter.get("/",getProjectDetails);
+// Get project details by id
+projectRouter.get("/:id", getProjectDetails);
 
-projectRouter.post("/",createProject);
+projectRouter.post("/",uploadMesurments.array('files',10), createProject);
 
-projectRouter.patch("/",updateProject);
+projectRouter.patch("/:id",uploadMesurments.array('files',10), updateProject);
 
-projectRouter.delete("/",deleteProject);
+projectRouter.delete("/:id",deleteProject);
 
 export default projectRouter;

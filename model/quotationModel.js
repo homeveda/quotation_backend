@@ -1,6 +1,5 @@
 import mongoose, { Schema } from "mongoose";
 
-const { ObjectId } = mongoose.Types;
 
 const itemSchema = new Schema(
     {
@@ -8,6 +7,8 @@ const itemSchema = new Schema(
         floor: { type: String },
         area: { type: String },
         quantity: { type: Number, required: true },
+        price: { type: Number, required: true },
+        totalPrice: { type: Number, required: true },
         workType:{
             type: String,
             enum: ["Wood Work","Main Hardware","Other Hardware","Miscelaneous"],
