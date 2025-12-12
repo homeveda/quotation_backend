@@ -1,14 +1,13 @@
 import mongoose,{Schema} from "mongoose";
 
 const itemSchema = new Schema({
-    name: { type: String, required: true },
+    name: {
+        type: String
+    },
     imageLink: {
         type: String,
     },
-    video: {
-        type: String,
-    },
-    design: {
+    designLink: {
         type: String,
     }
 });
@@ -22,3 +21,5 @@ const designSchema = new Schema({
     items: [itemSchema]
 });
 
+const Design = mongoose.model("Design", designSchema);
+export default Design;

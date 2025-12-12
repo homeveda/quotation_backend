@@ -20,7 +20,7 @@ const itemSchema = new Schema(
 const quotationSchema = new Schema(
     {
         projectId: {
-            type: "String",
+            type: String,
             ref: "Project",
             required: true
         },
