@@ -249,7 +249,7 @@ const resetPassword = async(req,res)=>{
         const { token } = req.params;
         const { newPassword } = req.body;
 
-        const decode = jwt.verify(token, process.env.JWT_SECRET || "defaultsecret");
+        const decode = jwt.verify(token, process.env.JWT_SECRET || "defaultsecret");        
         const user = await User.findOne({ email: decode.email, resetToken: token, resetTokenExpiry: { $gt: Date.now() } });
 
         if(!user){

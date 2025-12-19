@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import morgan from 'morgan';
 import connectDB  from './config/mongo.js';
 
 import dotenv from 'dotenv';
@@ -20,7 +21,7 @@ connectDB();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+app.use(morgan('dev'));
 
 app.use('/user', userRouter);
 app.use('/project', projectRouter);

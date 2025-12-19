@@ -308,10 +308,52 @@ const deleteCatelog = async (req, res) => {
   }
 };
 
+const getCatelogByCategory = async (req, res) => {
+  try{
+    const { category } = req.params;
+    const catelogs = await Catelog.find({ category });
+    if (catelogs.length === 0) {
+      return res.status(404).json({ message: "No catelogs found for this category" });
+    }
+    res.status(200).json(catelogs);
+  }catch(error){
+    res.status(500).json({ message: error.message });
+  }
+}
+
+const getCatelogByCategoryAndType = async (req, res) => {
+  try{
+    const { category, type } = req.params;
+    const catelogs = await Catelog.find({ category, type });
+    if (catelogs.length === 0) {
+      return res.status(404).json({ message: "No catelogs found for this category and type" });
+    }
+    res.status(200).json(catelogs);
+  }catch(error){
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getCatelogByCategoryAndWorkType = async (req, res) => {
+  try{
+    const { category, workType } = req.params;
+    const catelogs = await Catelog.find({ category, workType });
+    if (catelogs.length === 0) {
+      return res.status(404).json({ message: "No catelogs found for this category and workType" });
+    }
+    res.status(200).json(catelogs);
+  }
+  catch(error){
+    res.status(500).json({ message: error.message });
+  }
+};
 export {
   createCatelog,
   getAllCatelogs,
   getCatelogByName,
   deleteCatelog,
   updateCatelog,
+  getCatelogByCategory,
+  getCatelogByCategoryAndType,
+  getCatelogByCategoryAndWorkType
 };
