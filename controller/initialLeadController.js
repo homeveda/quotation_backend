@@ -10,6 +10,7 @@ const createInitalLead = async (req, res) => {
       address,
       contactNumber,
       architectStatus,
+      leadStatus: req.body.leadStatus || "New",
     });
     await newLead.save();
     res
@@ -69,6 +70,7 @@ const updateInitialLead = async (req, res) => {
         lead.address = address || lead.address;
         lead.contactNumber = contactNumber || lead.contactNumber;
         lead.architectStatus = architectStatus || lead.architectStatus;
+        lead.leadStatus = req.body.leadStatus || lead.leadStatus;
         await lead.save();
         res.status(200).json({ message: "Initial Lead updated successfully", lead });
     } catch (error) {

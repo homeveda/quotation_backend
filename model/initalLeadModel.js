@@ -24,6 +24,12 @@ const initalLeadSchema = new Schema({
     default: "Account Not Created",
     required: true,
   },
+  leadStatus:{
+    type: String,
+    enum:["New","Hot","Closed","Follow Up"],
+    default:"New",
+    required:true,
+  }
 });
 
 const InitalLead = mongoose.model("InitalLead", initalLeadSchema);

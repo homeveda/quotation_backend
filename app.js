@@ -26,7 +26,7 @@ app.use(morgan('dev'));
 app.use('/user', userRouter);
 app.use('/project', projectRouter);
 app.use('/catelog',checkAdmin, catelogRouter);
-app.use('/initallead',initialLeadRouter);
+app.use('/initiallead',checkAdmin,initialLeadRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
