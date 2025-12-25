@@ -1,5 +1,49 @@
 import Project from "../model/projectModel.js";
 import { v4 as UUIDV4} from 'uuid';
+import { PutObjectCommand,DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { s3 } from "../config/aws.js";
+
+const uploadFile = async (file, projectid) => {
+  if (!file) return null;
+  const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
+  const filename = `${Date.now()}-${file.originalname}`.replace(/\s+/g, "_");
+  const key = `projects/${projectid}/plan/${filename}`;
+  const Body = file.buffer ? file.buffer : fs.createReadStream(file.path);
+
+  const params = {
+    Bucket: bucket,
+    Key: key,
+    Body,
+    ContentType: file.mimetype,
+    ACL: "public-read",
+  };
+
+  try {
+    const command = new PutObjectCommand(params);
+    await s3.send(command);
+
+    // Construct file URL manually
+    const fileUrl = `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    return fileUrl;
+  } catch (err) {
+    console.error("❌ File upload failed:", err);
+    throw err;
+  }
+};
+
+const deleteS3Object = async (key) => {
+  if (!key) return { key, ok: false, error: "No key provided" };
+  const Bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
+  const params = { Bucket, Key: key };
+  const cmd = new DeleteObjectCommand(params);
+  try {
+    await s3.send(cmd);
+    return { key, ok: true };
+  } catch (err) {
+    return { key, ok: false, error: err.message || String(err) };
+  }
+};
+
 const getProjectsOfUser = async (req, res) => {
     try {
         // Expect userEmail as query param: /user?userEmail=foo@x.com
@@ -63,6 +107,28 @@ const createProject = async (req, res) => {
         if (kitchen) projectData.kitchen = kitchen;
         if (wardrobe) projectData.wardrobe = wardrobe;
 
+        // If files are uploaded (multer memoryStorage), upload to S3
+        if (req.files && req.files.length > 0) {
+            const uploadedUrls = [];
+            for (const file of req.files) {
+                try {
+                    const fileUrl = await uploadFile(file, id);
+                    uploadedUrls.push(fileUrl);
+                } catch (uploadErr) {
+                    console.error("❌ Failed to upload file:", uploadErr);
+                    return res.status(500).json({ message: "File upload to S3 failed", error: uploadErr.message });
+                }
+            }
+            // attach files to appropriate field: if kitchen exists use kitchen.layoutPlan else wardrobe.measureents
+            if (kitchen) {
+                projectData.kitchen = projectData.kitchen || {};
+                projectData.kitchen.layoutPlan = uploadedUrls;
+            } else if (wardrobe) {
+                projectData.wardrobe = projectData.wardrobe || {};
+                projectData.wardrobe.measureents = uploadedUrls;
+            }
+        }
+
         const newProject = new Project(projectData);
         await newProject.save();
         res.status(201).json({ message: "Project created successfully", project: newProject });
@@ -123,6 +189,28 @@ const updateProject = async (req, res) => {
             project.kitchen = undefined;
         }
 
+        // If files uploaded, upload to S3 and attach to the appropriate field
+        if (req.files && req.files.length > 0) {
+            const uploadedUrls = [];
+            for (const file of req.files) {
+                try {
+                    const fileUrl = await uploadFile(file, id);
+                    uploadedUrls.push(fileUrl);
+                } catch (uploadErr) {
+                    console.error("❌ Failed to upload file:", uploadErr);
+                    return res.status(500).json({ message: "File upload to S3 failed", error: uploadErr.message });
+                }
+            }
+            if (kitchen !== undefined) {
+                project.kitchen = project.kitchen || {};
+                project.kitchen.layoutPlan = uploadedUrls;
+            }
+            if (wardrobe !== undefined) {
+                project.wardrobe = project.wardrobe || {};
+                project.wardrobe.measureents = uploadedUrls;
+            }
+        }
+
         // After updates ensure at least one of kitchen/wardrobe remains
         if (!project.kitchen && !project.wardrobe) {
             return res.status(400).json({ message: "Project must have either 'kitchen' or 'wardrobe'" });
@@ -144,16 +232,73 @@ const deleteProject = async (req, res) => {
         if (!id) {
             return res.status(400).json({ message: "Project id is required" });
         }
-        const deleted = await Project.findOneAndDelete({ id });
-        if (!deleted) {
+
+        // Find the project first to get file URLs
+        const project = await Project.findOne({ id });
+        if (!project) {
             return res.status(404).json({ message: "Project not found or you don't have permission to delete it" });
         }
 
-        res.status(200).json({ message: "Project deleted successfully", project: deleted });
+        // Extract all file URLs from the project
+        const fileUrls = [];
+        if (project.kitchen && project.kitchen.layoutPlan && Array.isArray(project.kitchen.layoutPlan)) {
+            fileUrls.push(...project.kitchen.layoutPlan);
+        }
+        if (project.wardrobe && project.wardrobe.measureents && Array.isArray(project.wardrobe.measureents)) {
+            fileUrls.push(...project.wardrobe.measureents);
+        }
+
+        // Delete all files from S3
+        if (fileUrls.length > 0) {
+            const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
+            const urlPattern = new RegExp(`https://${bucket}\\.s3\\.[a-z0-9-]+\\.amazonaws\\.com/(.+)`);
+            
+            for (const fileUrl of fileUrls) {
+                const match = fileUrl.match(urlPattern);
+                if (match && match[1]) {
+                    const key = match[1];
+                    await deleteS3Object(key);
+                }
+            }
+        }
+
+        // Now delete the project from database
+        const deleted = await Project.findOneAndDelete({ id });
+        res.status(200).json({ message: "Project and all associated files deleted successfully", project: deleted });
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server Error" });
     }
 };
 
-export { getProjectsOfUser, createProject, updateProject, getProjectDetails, deleteProject };
+const deleteProjectFile = async (req, res) => {
+    try {
+        const { fileUrl } = req.body;
+        if (!fileUrl) {
+            return res.status(400).json({ message: "fileUrl is required" });
+        }
+
+        // Extract the key from the S3 URL
+        const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
+        const urlPattern = new RegExp(`https://${bucket}\\.s3\\.[a-z0-9-]+\\.amazonaws\\.com/(.+)`);
+        const match = fileUrl.match(urlPattern);
+        
+        if (!match || !match[1]) {
+            return res.status(400).json({ message: "Invalid S3 file URL" });
+        }
+
+        const key = match[1];
+        const result = await deleteS3Object(key);
+        
+        if (!result.ok) {
+            return res.status(500).json({ message: "Failed to delete file from S3", error: result.error });
+        }
+
+        res.status(200).json({ message: "File deleted successfully from S3" });
+    } catch (err) {
+        console.error("Error deleting file:", err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export { getProjectsOfUser, createProject, updateProject, getProjectDetails, deleteProject, deleteProjectFile };

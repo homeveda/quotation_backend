@@ -1,4 +1,4 @@
-import Design from "../model/designModel";
+import Design from "../model/designModel.js";
 import Project from "../model/projectModel.js";
 import fs from "fs";
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
