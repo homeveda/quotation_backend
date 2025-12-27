@@ -8,10 +8,7 @@ const router = express.Router();
 //Get Design by projectId
 router.get('/:projectId', getDesigns);
 // Create design with up to 50 items; files arrays must match item order
-router.post('/', upload.fields([
-  { name: 'imageFiles', maxCount: 50 },
-  { name: 'designFiles', maxCount: 50 }
-]), createDesign);
+router.post('/', upload.any(), createDesign);
 
 // Update single item (name and/or files)
 router.patch('/:designId/items/:itemId', upload.fields([

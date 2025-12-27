@@ -66,57 +66,63 @@ const getDesigns = async (req, res) => {
 };
 
 const createDesign = async (req, res) => {
-    try{
-        const { projectId } = req.body;
-        if (!projectId) return res.status(400).json({ message: "projectId is required" });
-        // Verify project exists (use findById to match typical _id usage)
-        const projectExists = await Project.findById(projectId);
-        if (!projectExists) return res.status(400).json({ message: "Invalid projectId" });
-
-        // Expect `items` in body as JSON string or array of objects with at least `name`.
-        // Files expected as multipart fields: `imageFiles` (array) and `designFiles` (array)
-        let itemsInput = [];
-        if (req.body.items) {
-            itemsInput = typeof req.body.items === 'string' ? JSON.parse(req.body.items) : req.body.items;
-        } else if (req.body.names) {
-            // support simple names array
-            itemsInput = Array.isArray(req.body.names) ? req.body.names.map(n => ({ name: n })) : JSON.parse(req.body.names);
-        } else {
-            return res.status(400).json({ message: 'items (array) is required in body' });
-        }
-
-        if (!Array.isArray(itemsInput)) return res.status(400).json({ message: 'items must be an array' });
-        if (itemsInput.length > 50) return res.status(400).json({ message: 'Maximum 50 items allowed' });
-
-        const imageFiles = (req.files && req.files.imageFiles) || [];
-        const designFiles = (req.files && req.files.designFiles) || [];
-
-        // Build items with uploads
-        const items = [];
-        for (let i = 0; i < itemsInput.length; i++) {
-            const input = itemsInput[i] || {};
-            const item = { name: input.name || input.title || '' };
-            const imageFile = imageFiles[i];
-            const designFile = designFiles[i];
-            if (imageFile) {
-                const url = await uploadImageToS3(imageFile, projectId);
-                item.imageLink = typeof url === 'string' ? url : null;
-            }
-            if (designFile) {
-                const url = await uploadImageToS3(designFile, projectId);
-                item.designLink = typeof url === 'string' ? url : null;
-            }
-            items.push(item);
-        }
-
-        const design = new Design({ projectId, items });
-        await design.save();
-        return res.status(201).json({ design });
-    }catch(err){
-        console.log(err);
-        res.status(500).json({ message: "Server Error" });
+  try {
+    const { projectId } = req.body;
+    // console.log(req.body)
+    if (!projectId) {
+      return res.status(400).json({ message: "projectId is required" });
     }
-}
+    // ✅ Correct project check
+    const projectExists = await Project.find({id:projectId});
+    console.log(projectExists);
+    if (!projectExists) {
+          return res.status(400).json({ message: "Invalid projectId" });
+    }
+    
+    const itemsMap = {};
+
+    // ✅ 1. Extract item names
+
+    req.body.items.forEach((item, index) => {
+        console.log(item.name);
+        const {name} = item;
+        itemsMap[index] = { name };
+       
+    })
+    console.log(itemsMap);
+
+    if (Object.keys(itemsMap).length === 0) {
+      return res.status(400).json({ message: "No items provided" });
+    }
+
+    // ✅ 2. Handle files
+    for (const file of req.files || []) {
+      const match = file.fieldname.match(/items\[(\d+)\]\[(image|design)\]/);
+      if (!match) continue;
+
+      const index = match[1];
+      const type = match[2];
+
+      if (!itemsMap[index]) itemsMap[index] = {};
+
+      const url = await uploadImageToS3(file, projectId);
+
+      if (type === "image") itemsMap[index].imageLink = url;
+      if (type === "design") itemsMap[index].designLink = url;
+    }
+
+    // ✅ 3. Save to DB
+    const design = await Design.create({
+      projectId,
+      items: Object.values(itemsMap),
+    });
+
+    return res.status(201).json({ success: true, design });
+  } catch (err) {
+    console.error("Create Design Error:", err);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
 
 // PATCH: update a single item within a design
 const updateDesignItem = async (req, res) => {
