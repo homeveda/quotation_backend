@@ -14,7 +14,7 @@ const parseJSONField = (field) => {
 
 const getQuotations = async (req, res) => {
     try {
-        const quotations = await Quotation.find().populate('projectId');
+        const quotations = await Quotation.find({ projectId: req.params.projectId });
         res.status(200).json({ quotations });
     }
     catch (err) {
@@ -91,10 +91,10 @@ const createQuotation = async (req, res) => {
 // Update an existing quotation. Recalculates totals when items are updated.
 const updateQuotation = async (req, res) => {
     try {
-        const { id } = req.params; // quotation _id (Mongo)
-        if (!id) return res.status(400).json({ message: "Quotation id is required in params" });
+        const {quotationId: _id} = req.params;;
+        if (!_id) return res.status(400).json({ message: "Quotation id is required in params" });
 
-        const quotation = await Quotation.findById(id);
+        const quotation = await Quotation.findById(_id);
         if (!quotation) return res.status(404).json({ message: "Quotation not found" });
 
         const { siteAddress, category, notes } = req.body;
@@ -170,9 +170,9 @@ const updateQuotation = async (req, res) => {
 // Delete a quotation by its Mongo _id (in params)
 const deleteQuotation = async (req, res) => {
     try {
-        const { id } = req.params;
-        if (!id) return res.status(400).json({ message: "Quotation id is required in params" });
-        const deleted = await Quotation.findByIdAndDelete(id);
+        const { projectId } = req.params;
+        if (!projectId) return res.status(400).json({ message: "Project id is required in params" });
+        const deleted = await Quotation.findOneAndDelete({ id:projectId });
         if (!deleted) return res.status(404).json({ message: "Quotation not found" });
         res.status(200).json({ message: "Quotation deleted", quotation: deleted });
     } catch (err) {

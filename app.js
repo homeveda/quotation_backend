@@ -11,6 +11,7 @@ import projectRouter from './routes/project.js';
 import catelogRouter from './routes/catelog.js';
 import initialLeadRouter from './routes/initialLead.js';
 import designRouter from "./routes/design.js";
+import quotationRouter from "./routes/quotation.js";
 
 import checkAdmin from './middleware/checkAdmin.js';
 
@@ -26,9 +27,10 @@ app.use(morgan('dev'));
 
 app.use('/user', userRouter);
 app.use('/project', projectRouter);
-app.use('/designs', designRouter);
+app.use('/designs', checkAdmin, designRouter);
 app.use('/catelog',checkAdmin, catelogRouter);
 app.use('/initiallead',checkAdmin,initialLeadRouter);
+app.use('/quotation', quotationRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

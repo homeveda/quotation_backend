@@ -16,8 +16,13 @@ const catelogSchema = new Schema({
   },
   workType:{
     type: String, 
-    enum: ["Wood Work","Main Hardware","Other Hardware","Miscellaneous","Countertop"],
+    enum: ["Carcass","Shutters","Visibles","Base And Back","Main Hardware","Other Hardware","Miscellaneous","Countertop","Appliances"],
   },
+  //Wood Word -> Carcuass Shutters, Visibles, Base And Back
+  //Hardware -> Main Hardware Other Hardware
+  //Countertop
+  //Miscellaneous
+  //Appliances
   category: {
     type: String,
     enum: ["Builder", "Economy", "Standard", "VedaX"],

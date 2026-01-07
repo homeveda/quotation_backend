@@ -24,6 +24,7 @@ const uploadFile = async (file, projectid) => {
 
     // Construct file URL manually
     const fileUrl = `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    console.log("✅ File uploaded successfully:", fileUrl);
     return fileUrl;
   } catch (err) {
     console.error("❌ File upload failed:", err);
@@ -108,6 +109,7 @@ const createProject = async (req, res) => {
         if (wardrobe) projectData.wardrobe = wardrobe;
 
         // If files are uploaded (multer memoryStorage), upload to S3
+        console.log("Files received:", req.files);
         if (req.files && req.files.length > 0) {
             const uploadedUrls = [];
             for (const file of req.files) {
@@ -189,9 +191,65 @@ const updateProject = async (req, res) => {
             project.kitchen = undefined;
         }
 
-        // If files uploaded, upload to S3 and attach to the appropriate field
+        // Support removing existing files, optionally replacing, or merging uploads
+        // parse `removeFiles` (array) and `replaceFiles` (boolean/string) from body
+        let removeFiles = parseJSONField(req.body.removeFiles);
+        const replaceFilesFlag = req.body.replaceFiles === 'true' || req.body.replaceFiles === true;
+
+        // Determine which field (kitchen or wardrobe) we're targeting for files
+        let target = null;
+        if (kitchen !== undefined) target = 'kitchen';
+        else if (wardrobe !== undefined) target = 'wardrobe';
+        else if (project.kitchen) target = 'kitchen';
+        else if (project.wardrobe) target = 'wardrobe';
+
+        // Collect existing files for the target field
+        let existingFiles = [];
+        if (target === 'kitchen' && project.kitchen && Array.isArray(project.kitchen.layoutPlan)) {
+            existingFiles = [...project.kitchen.layoutPlan];
+        } else if (target === 'wardrobe' && project.wardrobe && Array.isArray(project.wardrobe.measureents)) {
+            existingFiles = [...project.wardrobe.measureents];
+        }
+
+        // Prepare bucket and urlPattern for S3 key extraction
+        const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
+        const urlPattern = new RegExp(`https://${bucket}\\.s3\\.[a-z0-9-]+\\.amazonaws\\.com/(.+)`);
+
+        // If replaceFilesFlag is true, delete all existing files for the target from S3
+        if (replaceFilesFlag && existingFiles.length > 0) {
+            for (const fileUrl of existingFiles) {
+                try {
+                    const match = typeof fileUrl === 'string' ? fileUrl.match(urlPattern) : null;
+                    if (match && match[1]) {
+                        await deleteS3Object(match[1]);
+                    }
+                } catch (delErr) {
+                    console.error('❌ Failed to delete existing file from S3 during replace:', delErr);
+                }
+            }
+            // clear existingFiles as we've removed them
+            existingFiles = [];
+        }
+
+        // If removeFiles provided, delete them from S3 and remove from existingFiles
+        if (Array.isArray(removeFiles) && removeFiles.length > 0) {
+            for (const fileUrl of removeFiles) {
+                try {
+                    const match = typeof fileUrl === 'string' ? fileUrl.match(urlPattern) : null;
+                    if (match && match[1]) {
+                        await deleteS3Object(match[1]);
+                    }
+                } catch (delErr) {
+                    console.error('❌ Failed to delete requested file from S3:', delErr);
+                }
+            }
+            // Filter out the removed URLs from existingFiles
+            existingFiles = existingFiles.filter(url => !removeFiles.includes(url));
+        }
+
+        // If files uploaded, upload to S3
+        const uploadedUrls = [];
         if (req.files && req.files.length > 0) {
-            const uploadedUrls = [];
             for (const file of req.files) {
                 try {
                     const fileUrl = await uploadFile(file, id);
@@ -201,14 +259,26 @@ const updateProject = async (req, res) => {
                     return res.status(500).json({ message: "File upload to S3 failed", error: uploadErr.message });
                 }
             }
-            if (kitchen !== undefined) {
-                project.kitchen = project.kitchen || {};
-                project.kitchen.layoutPlan = uploadedUrls;
-            }
-            if (wardrobe !== undefined) {
-                project.wardrobe = project.wardrobe || {};
-                project.wardrobe.measureents = uploadedUrls;
-            }
+        }
+
+        // Compute final file list depending on replace flag
+        let finalFiles = [];
+        if (replaceFilesFlag) {
+            finalFiles = uploadedUrls;
+        } else {
+            finalFiles = [...existingFiles, ...uploadedUrls];
+        }
+
+        // Attach finalFiles to appropriate field if we have a target
+        if (target === 'kitchen') {
+            project.kitchen = project.kitchen || {};
+            if (finalFiles.length > 0) project.kitchen.layoutPlan = finalFiles;
+            else project.kitchen.layoutPlan = project.kitchen.layoutPlan ? [] : undefined;
+        }
+        if (target === 'wardrobe') {
+            project.wardrobe = project.wardrobe || {};
+            if (finalFiles.length > 0) project.wardrobe.measureents = finalFiles;
+            else project.wardrobe.measureents = project.wardrobe.measureents ? [] : undefined;
         }
 
         // After updates ensure at least one of kitchen/wardrobe remains

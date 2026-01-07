@@ -74,7 +74,6 @@ const createDesign = async (req, res) => {
     }
     // ✅ Correct project check
     const projectExists = await Project.find({id:projectId});
-    console.log(projectExists);
     if (!projectExists) {
           return res.status(400).json({ message: "Invalid projectId" });
     }

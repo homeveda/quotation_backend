@@ -24,6 +24,15 @@ const initalLeadSchema = new Schema({
     default: "Account Not Created",
     required: true,
   },
+  architectName: {
+    type: String,
+  },
+  architectContact: {
+    type: String,
+  },
+  architectCity: {
+    type: String,
+  },
   leadStatus:{
     type: String,
     enum:["New","Hot","Closed","Follow Up"],
