@@ -36,7 +36,11 @@ const catelogSchema = new Schema({
     type: String,   
     enum: ["Normal","Premium"],
     required: true
-  }
+  },
+  displayedToClients: {
+    type: Boolean,
+    default: true
+  },
 });
 
 // Require video field for Premium items

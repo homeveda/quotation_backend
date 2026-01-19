@@ -3,14 +3,17 @@ import { v4 as UUIDV4 } from "uuid";
 
 const createInitalLead = async (req, res) => {
   try {
-    const { name, address, contactNumber, architectStatus } = req.body;
+    const { name, address, contactNumber, architectStatus, architectName, architectContact, architectCity, leadStatus } = req.body;
     const newLead = new InitalLead({
       id: UUIDV4(),
       name,
       address,
       contactNumber,
       architectStatus,
-      leadStatus: req.body.leadStatus || "New",
+      architectName,
+      architectContact,
+      architectCity,
+      leadStatus: leadStatus || "New",
     });
     await newLead.save();
     res
@@ -58,7 +61,7 @@ const deleteInitialLead = async (req, res) => {
 
 const updateInitialLead = async (req, res) => {
     try {
-        const { id, name, address, contactNumber, architectStatus } = req.body;
+        const { id, name, address, contactNumber, architectStatus, architectName, architectContact, architectCity, leadStatus } = req.body;
         if (!id) {
             return res.status(400).json({ message: "Lead id is required" });
         }
@@ -70,7 +73,10 @@ const updateInitialLead = async (req, res) => {
         lead.address = address || lead.address;
         lead.contactNumber = contactNumber || lead.contactNumber;
         lead.architectStatus = architectStatus || lead.architectStatus;
-        lead.leadStatus = req.body.leadStatus || lead.leadStatus;
+        lead.architectName = architectName || lead.architectName;
+        lead.architectContact = architectContact || lead.architectContact;
+        lead.architectCity = architectCity || lead.architectCity;
+        lead.leadStatus = leadStatus || lead.leadStatus;
         await lead.save();
         res.status(200).json({ message: "Initial Lead updated successfully", lead });
     } catch (error) {

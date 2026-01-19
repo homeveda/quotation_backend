@@ -35,7 +35,7 @@ const uploadFile = async (file, subfolder, category, type) => {
 const createCatelog = async (req, res) => {
   try {
     console.log("Request Body:", req.body);
-    const { name, description, category, price, type, workType } = req.body;
+    const { name, description, category, price, type, workType, displayedToClients } = req.body;
 
     // Basic validation
     if (!name || !category || !price || !type) {
@@ -110,6 +110,7 @@ const createCatelog = async (req, res) => {
       price,
       type,
       workType,
+      displayedToClients: displayedToClients !== undefined ? displayedToClients : true,
     };
 
     // Only attach video field when premium
@@ -141,7 +142,7 @@ const updateCatelog = async (req, res) => {
   try {
     const name1 = req.params.name;
     console.log(name1);
-    const { name, description, category, price, type, workType } = req.body;
+    const { name, description, category, price, type, workType, displayedToClients } = req.body;
     const catelog = await Catelog.findOne({ name: name1 });
     if (!catelog) {
       return res.status(404).json({ message: "Catelog not found" });
@@ -152,6 +153,9 @@ const updateCatelog = async (req, res) => {
     catelog.price = price || catelog.price;
     catelog.type = type || catelog.type;
     catelog.workType = workType || catelog.workType;
+    if (displayedToClients !== undefined) {
+      catelog.displayedToClients = displayedToClients;
+    }
     const files = req.files || {};
     const imageFile = (files.image && files.image[0]) || req.file || null;
     const videoFile = (files.video && files.video[0]) || null;

@@ -63,6 +63,10 @@ const projectSchema = new Schema({
         type : String,
         enum : ["Builder","Economy","Standard","VedaX"]
     },
+    status:{
+        type: String,
+        enum:["Design Approvals","Order Booking","Site Measurement","Production","Inspection","Installation","Expreience"],
+    },
     kitchen: {
         type: kitchenSchema,
         required: false
