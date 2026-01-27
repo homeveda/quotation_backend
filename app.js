@@ -13,6 +13,7 @@ import initialLeadRouter from './routes/initialLead.js';
 import designRouter from "./routes/design.js";
 import quotationRouter from "./routes/quotation.js";
 import projectInspectionRouter from "./routes/inspection.js";
+import materialRouter from "./routes/material.js";
 
 import checkAdmin from './middleware/checkAdmin.js';
 
@@ -33,6 +34,7 @@ app.use('/catelog',checkAdmin, catelogRouter);
 app.use('/initiallead',checkAdmin,initialLeadRouter);
 app.use('/quotation', quotationRouter);
 app.use('/inspections', projectInspectionRouter);
+app.use('/materials', checkAdmin, materialRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

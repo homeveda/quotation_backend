@@ -43,7 +43,7 @@ const wardrobeSchema = new Schema({
 
 const projectSchema = new Schema({
     id:{
-        type: "String",
+        type: String,
         default: uuidv4,
         unique: true
     },
@@ -65,7 +65,7 @@ const projectSchema = new Schema({
     },
     status:{
         type: String,
-        enum:["Design Approvals","Order Booking","Site Measurement","Production","Inspection","Installation","Expreience"],
+        enum:["LEAD","DESIGN","QUOTATION","10% TOKEN","FINAL MEASUREMENT","FINAL DRAWINGS","50% PAYMENT","FACTORY ORDER","SITE READY CHECK","FACTORY FULL PAYMENT","DISPATCH","90% CLIENT PAYMENT","INSTALLATION","QUALITY CHECK","HANDOVER","10% FINAL PAYMENT","AFTER SALES"],
     },
     kitchen: {
         type: kitchenSchema,
@@ -74,7 +74,7 @@ const projectSchema = new Schema({
     wardrobe: {
         type: wardrobeSchema,
         required: false
-    }
+    },
 });
 
 const Project = new mongoose.model("Project", projectSchema);

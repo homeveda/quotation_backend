@@ -34,14 +34,21 @@ const uploadFile = async (file, projectid) => {
 
 const deleteS3Object = async (key) => {
   if (!key) return { key, ok: false, error: "No key provided" };
+  
+  // Decode the key in case it's URL-encoded
+  const decodedKey = decodeURIComponent(key);
+  
   const Bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
-  const params = { Bucket, Key: key };
+  const params = { Bucket, Key: decodedKey };
   const cmd = new DeleteObjectCommand(params);
+  
   try {
-    await s3.send(cmd);
-    return { key, ok: true };
+    const response = await s3.send(cmd);
+    console.log("✅ S3 object deleted successfully:", decodedKey);
+    return { key: decodedKey, ok: true, response };
   } catch (err) {
-    return { key, ok: false, error: err.message || String(err) };
+    console.error("❌ S3 delete failed:", err);
+    return { key: decodedKey, ok: false, error: err.message || String(err) };
   }
 };
 
@@ -87,7 +94,7 @@ const parseJSONField = (field) => {
 const createProject = async (req, res) => {
     try {
         // multipart requests can send JSON fields as strings, parse safely
-        const { userEmail: rawUserEmail, architectName, category, projectHead } = req.body;
+        const { userEmail: rawUserEmail, architectName, category, projectHead, status } = req.body;
         let kitchen = parseJSONField(req.body.kitchen);
         let wardrobe = parseJSONField(req.body.wardrobe);
         const userEmail = rawUserEmail;
@@ -104,7 +111,19 @@ const createProject = async (req, res) => {
         if (!userEmail) return res.status(400).json({ message: "userEmail is required" });
         if (!projectHead) return res.status(400).json({ message: "projectHead is required" });
 
-        const projectData = { id, userEmail, architectName, category, projectHead };
+                const projectData = { id, userEmail, architectName, category, projectHead };
+                // optional status with enum validation
+                if (status !== undefined) {
+                        const allowedStatus = [
+                            "LEAD","DESIGN","QUOTATION","10% TOKEN","FINAL MEASUREMENT","FINAL DRAWINGS",
+                            "50% PAYMENT","FACTORY ORDER","SITE READY CHECK","FACTORY FULL PAYMENT","DISPATCH",
+                            "90% CLIENT PAYMENT","INSTALLATION","QUALITY CHECK","HANDOVER","10% FINAL PAYMENT","AFTER SALES"
+                        ];
+                        if (!allowedStatus.includes(status)) {
+                                return res.status(400).json({ message: "Invalid status" });
+                        }
+                        projectData.status = status;
+                }
         if (kitchen) projectData.kitchen = kitchen;
         if (wardrobe) projectData.wardrobe = wardrobe;
 
@@ -144,7 +163,7 @@ const updateProject = async (req, res) => {
     try {
         // id comes from route param
         const { id } = req.params;
-        const { architectName, category } = req.body;
+        const { architectName, category, status } = req.body;
 
         if (!id) {
             return res.status(400).json({ message: "Project id is required" });
@@ -167,6 +186,19 @@ const updateProject = async (req, res) => {
             }
             project.category = category;
         }
+        // Status update if provided
+        if (status !== undefined) {
+            const allowedStatus = [
+              "LEAD","DESIGN","QUOTATION","10% TOKEN","FINAL MEASUREMENT","FINAL DRAWINGS",
+              "50% PAYMENT","FACTORY ORDER","SITE READY CHECK","FACTORY FULL PAYMENT","DISPATCH",
+              "90% CLIENT PAYMENT","INSTALLATION","QUALITY CHECK","HANDOVER","10% FINAL PAYMENT","AFTER SALES"
+            ];
+            if (!allowedStatus.includes(status)) {
+                return res.status(400).json({ message: "Invalid status" });
+            }
+            project.status = status;
+        }
+
         // If both kitchen and wardrobe provided in update, reject
         if (kitchen && wardrobe) {
             return res.status(400).json({ message: "A project can have only one of 'kitchen' or 'wardrobe'" });
@@ -192,8 +224,10 @@ const updateProject = async (req, res) => {
         }
 
         // Support removing existing files, optionally replacing, or merging uploads
-        // parse `removeFiles` (array) and `replaceFiles` (boolean/string) from body
-        let removeFiles = parseJSONField(req.body.removeFiles);
+        // Accept both `removeFiles` and `removedFiles` from clients
+        let removeFiles = parseJSONField(
+            req.body.removeFiles !== undefined ? req.body.removeFiles : req.body.removedFiles
+        );
         const replaceFilesFlag = req.body.replaceFiles === 'true' || req.body.replaceFiles === true;
 
         // Determine which field (kitchen or wardrobe) we're targeting for files

@@ -3,8 +3,8 @@ import { v4 as UUIDV4 } from "uuid";
 
 const createInitalLead = async (req, res) => {
   try {
-    const { name, address, contactNumber, architectStatus, architectName, architectContact, architectCity, leadStatus } = req.body;
-    const newLead = new InitalLead({
+    const { name, address, contactNumber, architectStatus, architectName, architectContact, architectAddress, leadStatus } = req.body;
+      const newLead = new InitalLead({
       id: UUIDV4(),
       name,
       address,
@@ -12,9 +12,11 @@ const createInitalLead = async (req, res) => {
       architectStatus,
       architectName,
       architectContact,
-      architectCity,
+      architectAddress: architectAddress || req.body.architectCity,
       leadStatus: leadStatus || "New",
-    });
+        Requirements: req.body.Requirements || [],
+        category: req.body.category || [],
+      });
     await newLead.save();
     res
       .status(201)
@@ -61,7 +63,7 @@ const deleteInitialLead = async (req, res) => {
 
 const updateInitialLead = async (req, res) => {
     try {
-        const { id, name, address, contactNumber, architectStatus, architectName, architectContact, architectCity, leadStatus } = req.body;
+      const { id, name, address, contactNumber, architectStatus, architectName, architectContact, architectAddress, leadStatus } = req.body;
         if (!id) {
             return res.status(400).json({ message: "Lead id is required" });
         }
@@ -75,8 +77,10 @@ const updateInitialLead = async (req, res) => {
         lead.architectStatus = architectStatus || lead.architectStatus;
         lead.architectName = architectName || lead.architectName;
         lead.architectContact = architectContact || lead.architectContact;
-        lead.architectCity = architectCity || lead.architectCity;
+        lead.architectAddress = architectAddress || req.body.architectCity || lead.architectAddress;
         lead.leadStatus = leadStatus || lead.leadStatus;
+        lead.Requirements = req.body.Requirements || lead.Requirements;
+        lead.category = req.body.category || lead.category;
         await lead.save();
         res.status(200).json({ message: "Initial Lead updated successfully", lead });
     } catch (error) {

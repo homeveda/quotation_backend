@@ -9,16 +9,16 @@ const catelogRouter = Router();
 catelogRouter.post('/', catelogUpload, createCatelog);
 // Get all catelogs
 catelogRouter.get('/', getAllCatelogs);
+// Get catelogs by category and type (more specific routes first)
+catelogRouter.get('/category/:category/type/:type', getCatelogByCategoryAndType);
+// Get catelogs by category and workType
+catelogRouter.get('/category/:category/workType/:workType', getCatelogByCategoryAndWorkType);
+// Get catelogs by category (generic - last)
+catelogRouter.get('/category/:category', getCatelogByCategory);
 // Get catelog by name
 catelogRouter.get('/:name', getCatelogByName);
 // Delete catelog by name
 catelogRouter.delete('/:name', deleteCatelog);
 //Update catelog
 catelogRouter.patch('/:name', catelogUpload, updateCatelog);
-// Get catelogs by category
-catelogRouter.get('/category/:category', getCatelogByCategory);
-// Get catelogs by category and type
-catelogRouter.get('/category/:category/type/:type', getCatelogByCategoryAndType);
-// Get catelogs by category and workType
-catelogRouter.get('/category/:category/workType/:workType', getCatelogByCategoryAndWorkType);
 export default catelogRouter;

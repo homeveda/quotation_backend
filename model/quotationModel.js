@@ -9,6 +9,7 @@ const itemSchema = new Schema(
         totalPrice: { type: Number, required: true },
         workType:{
             type: String,
+             
             enum: ["Carcass","Shutters","Visibles","Base And Back","Main Hardware","Other Hardware","Miscellaneous","Countertop","Appliances"],
         },
     },

@@ -30,14 +30,19 @@ const initalLeadSchema = new Schema({
   architectContact: {
     type: String,
   },
-  architectCity: {
+  architectAddress: {
     type: String,
   },
   leadStatus:{
     type: String,
-    enum:["New","Hot","Closed","Follow Up"],
-    default:"New",
-    required:true,
+    //Notes instead of stages 
+    // Glass Work required 
+  },Requirements:{
+    type: [String],
+    // options which can be picked -> Glass Work, Kitchen, Wardrobe, Facade
+  },category:{
+    type : [String],
+    // options which can be picked -> Builder, Economy, Standard, VedaX
   }
 });
 

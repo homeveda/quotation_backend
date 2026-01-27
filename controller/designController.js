@@ -8,7 +8,7 @@ const uploadImageToS3 = async (file, projectId) => {
     if(!file) return null;
     const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
     const filename = `${Date.now()}-${file.originalname}`.replace(/\s+/g, "_");
-    const key = `${projectId}/designs/${filename}`;
+    const key = `projects/${projectId}/designs/${filename}`;
     const Body = file.buffer ? file.buffer : fs.createReadStream(file.path);
 
     const params = {
@@ -36,7 +36,7 @@ const deleteFileFromS3 = async (fileUrl) => {
         const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
         let key;
         if (fileUrl.includes('.amazonaws.com/')) {
-            key = fileUrl.split('.amazonaws.com/')[1];
+            key = decodeURIComponent(fileUrl.split('.amazonaws.com/')[1]);
         } else {
             // fallback to parsing path
             try {

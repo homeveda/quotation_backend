@@ -55,10 +55,15 @@ const createCatelog = async (req, res) => {
     }
 
     const allowedWorkTypes = [
-      "Wood Work",
+      "Carcass",
+      "Shutters",
+      "Visibles",
+      "Base And Back",
       "Main Hardware",
       "Other Hardware",
       "Miscellaneous",
+      "Countertop",
+      "Appliances",
     ];
     if (workType && !allowedWorkTypes.includes(workType)) {
       return res.status(400).json({ message: "Invalid workType" });
@@ -243,14 +248,20 @@ const getS3KeyFromUrl = (url) => {
 
 const deleteS3Object = async (key) => {
   if (!key) return { key, ok: false, error: "No key provided" };
+  
+  // Decode the key in case it's URL-encoded
+  const decodedKey = decodeURIComponent(key);
+  
   const Bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
-  const params = { Bucket, Key: key };
+  const params = { Bucket, Key: decodedKey };
   const cmd = new DeleteObjectCommand(params);
   try {
     await s3.send(cmd);
-    return { key, ok: true };
+    console.log("✅ S3 object deleted successfully:", decodedKey);
+    return { key: decodedKey, ok: true };
   } catch (err) {
-    return { key, ok: false, error: err.message || String(err) };
+    console.error("❌ S3 delete failed:", err);
+    return { key: decodedKey, ok: false, error: err.message || String(err) };
   }
 };
 
