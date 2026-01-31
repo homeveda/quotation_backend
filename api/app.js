@@ -23,8 +23,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://frontend-ebon-three-97.vercel.app/",
-      "",
+      "https://frontend-ebon-three-97.vercel.app",
     ], // Allowed origins
     credentials: true, // Allows the server to accept cookies or other credentials
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], // Allowed HTTP methods
