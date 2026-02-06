@@ -44,13 +44,13 @@ const catelogSchema = new Schema({
 });
 
 // Require video field for Premium items
-catelogSchema.pre('validate', function(next) {
-  if (this.type === 'Premium' && !this.video) {
-    next(new Error('Premium catalog items must include a video link'));
-  } else {
-    next();
-  }
-});
+// catelogSchema.pre('validate', function(next) {
+//   if (this.type === 'Premium' && !this.video) {
+//     next(new Error('Premium catalog items must include a video link'));
+//   } else {
+//     next();
+//   }
+// });
 const Catelog = mongoose.model("Catelog", catelogSchema);
 
 export default Catelog;
