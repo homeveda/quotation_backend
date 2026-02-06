@@ -75,19 +75,19 @@ const createCatelog = async (req, res) => {
     const videoFile = (files.video && files.video[0]) || null;
 
     // Validation based on type
-    if (type === "Normal" && !imageFile) {
-      return res
-        .status(400)
-        .json({ message: "Normal items require an image upload" });
-    }
+    // if (type === "Normal" && !imageFile) {
+    //   return res
+    //     .status(400)
+    //     .json({ message: "Normal items require an image upload" });
+    // }
 
-    if (type === "Premium") {
-      if (!imageFile || !videoFile) {
-        return res.status(400).json({
-          message: "Premium items require both image and video uploads",
-        });
-      }
-    }
+    // if (type === "Premium") {
+    //   if (!imageFile || !videoFile) {
+    //     return res.status(400).json({
+    //       message: "Premium items require both image and video uploads",
+    //     });
+    //   }
+    // }
 
     const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
     if (!bucket) {
