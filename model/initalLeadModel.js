@@ -1,4 +1,4 @@
-//Name Address Contact Number Architect status(Account creation)
+//Name Address Contact Number 
 import mongoose, { Schema } from "mongoose";
 
 const initalLeadSchema = new Schema({
@@ -18,12 +18,6 @@ const initalLeadSchema = new Schema({
     type: String,
     required: true,
   },
-  architectStatus: {
-    type: String,
-    enum: ["Account Created", "Account Not Created"],
-    default: "Account Not Created",
-    required: true,
-  },
   architectName: {
     type: String,
   },
@@ -33,11 +27,7 @@ const initalLeadSchema = new Schema({
   architectAddress: {
     type: String,
   },
-  leadStatus:{
-    type: String,
-    //Notes instead of stages 
-    // Glass Work required 
-  },Requirements:{
+  Requirements:{
     type: [String],
     // options which can be picked -> Glass Work, Kitchen, Wardrobe, Facade
   },category:{

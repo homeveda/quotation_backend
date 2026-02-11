@@ -1,7 +1,7 @@
 import fs from "fs";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "../config/aws.js";
-import Catelog from "../model/catelogModel.js"; // adjust import path if needed
+import Catelog, { DEPARTMENT_WORKTYPE_MAP } from "../model/catelogModel.js";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 const uploadFile = async (file, subfolder, category, type) => {
@@ -35,13 +35,13 @@ const uploadFile = async (file, subfolder, category, type) => {
 const createCatelog = async (req, res) => {
   try {
     console.log("Request Body:", req.body);
-    const { name, description, category, price, type, workType, displayedToClients } = req.body;
+    const { name, description, category, price, type, department, workType, displayedToClients } = req.body;
 
     // Basic validation
-    if (!name || !category || !price || !type) {
+    if (!name || !category || !price || !type || !department || !workType) {
       return res
         .status(400)
-        .json({ message: "name, category, price and type are required" });
+        .json({ message: "name, category, price, type, department and workType are required" });
     }
 
     const allowedCategories = ["Builder", "Economy", "Standard", "VedaX"];
@@ -54,19 +54,14 @@ const createCatelog = async (req, res) => {
       return res.status(400).json({ message: "Invalid type" });
     }
 
-    const allowedWorkTypes = [
-      "Carcass",
-      "Shutters",
-      "Visibles",
-      "Base And Back",
-      "Main Hardware",
-      "Other Hardware",
-      "Miscellaneous",
-      "Countertop",
-      "Appliances",
-    ];
-    if (workType && !allowedWorkTypes.includes(workType)) {
-      return res.status(400).json({ message: "Invalid workType" });
+    const allowedDepartments = Object.keys(DEPARTMENT_WORKTYPE_MAP);
+    if (!allowedDepartments.includes(department)) {
+      return res.status(400).json({ message: `Invalid department. Allowed: ${allowedDepartments.join(', ')}` });
+    }
+
+    const allowedWorkTypes = DEPARTMENT_WORKTYPE_MAP[department];
+    if (!allowedWorkTypes.includes(workType)) {
+      return res.status(400).json({ message: `Invalid workType for ${department}. Allowed: ${allowedWorkTypes.join(', ')}` });
     }
 
     // Multer files
@@ -111,6 +106,7 @@ const createCatelog = async (req, res) => {
       name,
       description,
       imageLink,
+      department,
       category,
       price,
       type,
@@ -147,7 +143,7 @@ const updateCatelog = async (req, res) => {
   try {
     const name1 = req.params.name;
     console.log(name1);
-    const { name, description, category, price, type, workType, displayedToClients } = req.body;
+    const { name, description, category, price, type, department, workType, displayedToClients } = req.body;
     const catelog = await Catelog.findOne({ name: name1 });
     if (!catelog) {
       return res.status(404).json({ message: "Catelog not found" });
@@ -157,6 +153,7 @@ const updateCatelog = async (req, res) => {
     catelog.category = category || catelog.category;
     catelog.price = price || catelog.price;
     catelog.type = type || catelog.type;
+    catelog.department = department || catelog.department;
     catelog.workType = workType || catelog.workType;
     if (displayedToClients !== undefined) {
       catelog.displayedToClients = displayedToClients;
@@ -362,6 +359,83 @@ const getCatelogByCategoryAndWorkType = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Get department -> workType mapping (for frontend dropdowns)
+const getDepartments = async (req, res) => {
+  try {
+    res.status(200).json({ success: true, data: DEPARTMENT_WORKTYPE_MAP });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get catelogs by department
+const getCatelogByDepartment = async (req, res) => {
+  try {
+    const { department } = req.params;
+    const catelogs = await Catelog.find({ department });
+    if (catelogs.length === 0) {
+      return res.status(404).json({ message: "No catelogs found for this department" });
+    }
+    res.status(200).json(catelogs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get catelogs by department and workType
+const getCatelogByDepartmentAndWorkType = async (req, res) => {
+  try {
+    const { department, workType } = req.params;
+    const catelogs = await Catelog.find({ department, workType });
+    if (catelogs.length === 0) {
+      return res.status(404).json({ message: "No catelogs found for this department and workType" });
+    }
+    res.status(200).json(catelogs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get catelogs grouped by department -> workType
+const getCatelogGrouped = async (req, res) => {
+  try {
+    const { category, type } = req.query;
+    const matchStage = {};
+    if (category) matchStage.category = category;
+    if (type) matchStage.type = type;
+
+    const grouped = await Catelog.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: { department: "$department", workType: "$workType" },
+          items: { $push: "$$ROOT" },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $group: {
+          _id: "$_id.department",
+          workTypes: {
+            $push: {
+              workType: "$_id.workType",
+              items: "$items",
+              count: "$count"
+            }
+          },
+          totalCount: { $sum: "$count" }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    res.status(200).json({ success: true, data: grouped });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export {
   createCatelog,
   getAllCatelogs,
@@ -370,5 +444,9 @@ export {
   updateCatelog,
   getCatelogByCategory,
   getCatelogByCategoryAndType,
-  getCatelogByCategoryAndWorkType
+  getCatelogByCategoryAndWorkType,
+  getDepartments,
+  getCatelogByDepartment,
+  getCatelogByDepartmentAndWorkType,
+  getCatelogGrouped
 };

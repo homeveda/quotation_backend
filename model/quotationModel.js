@@ -1,5 +1,8 @@
 import mongoose, { Schema } from "mongoose";
+import { DEPARTMENT_WORKTYPE_MAP } from "./catelogModel.js";
 
+const ALL_DEPARTMENTS = Object.keys(DEPARTMENT_WORKTYPE_MAP);
+const ALL_WORKTYPES = [...new Set(Object.values(DEPARTMENT_WORKTYPE_MAP).flat())];
 
 const itemSchema = new Schema(
     {
@@ -7,10 +10,13 @@ const itemSchema = new Schema(
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
         totalPrice: { type: Number, required: true },
+        department: {
+            type: String,
+            enum: ALL_DEPARTMENTS,
+        },
         workType:{
             type: String,
-             
-            enum: ["Carcass","Shutters","Visibles","Base And Back","Main Hardware","Other Hardware","Miscellaneous","Countertop","Appliances"],
+            enum: ALL_WORKTYPES,
         },
     },
     { _id: false }

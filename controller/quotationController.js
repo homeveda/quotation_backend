@@ -56,6 +56,7 @@ const createQuotation = async (req, res) => {
                 quantity,
                 price,
                 totalPrice,
+                department: it.department,
                 workType: it.workType
             };
         });
@@ -125,6 +126,7 @@ const updateQuotation = async (req, res) => {
                     quantity,
                     price,
                     totalPrice,
+                    department: it.department,
                     workType: it.workType
                 };
             });
