@@ -23,7 +23,7 @@ const uploadFile = async (file, projectid) => {
     await s3.send(command);
 
     // Construct file URL manually
-    const fileUrl = `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    const fileUrl = `https://${bucket}.s3.${process.env.AWS_REGION_HV}.amazonaws.com/${key}`;
     console.log("✅ File uploaded successfully:", fileUrl);
     return fileUrl;
   } catch (err) {

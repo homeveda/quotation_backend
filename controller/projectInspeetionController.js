@@ -23,7 +23,7 @@ const uploadVideoToS3 = async (file, projectId) => {
         const command = new PutObjectCommand(params);
         await s3.send(command);
 
-        const fileUrl = `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+        const fileUrl = `https://${bucket}.s3.${process.env.AWS_REGION_HV}.amazonaws.com/${key}`;
         return fileUrl;
     } catch (err) {
         console.log('Failed to upload to S3:', err);

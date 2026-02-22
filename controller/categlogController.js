@@ -24,7 +24,7 @@ const uploadFile = async (file, subfolder, category, type) => {
     await s3.send(command);
 
     // Construct file URL manually
-    const fileUrl = `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    const fileUrl = `https://${bucket}.s3.${process.env.AWS_REGION_HV}.amazonaws.com/${key}`;
     return fileUrl;
   } catch (err) {
     console.error("❌ File upload failed:", err);

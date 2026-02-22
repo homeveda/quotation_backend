@@ -20,7 +20,7 @@ const uploadMaterialImage = async (file, projectId) => {
   try {
     const command = new PutObjectCommand(params);
     await s3.send(command);
-    const fileUrl = `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    const fileUrl = `https://${bucket}.s3.${process.env.AWS_REGION_HV}.amazonaws.com/${key}`;
     console.log("✅ Material image uploaded:", fileUrl);
     return fileUrl;
   } catch (err) {
