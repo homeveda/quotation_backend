@@ -33,6 +33,11 @@ const initalLeadSchema = new Schema({
   },category:{
     type : [String],
     // options which can be picked -> Builder, Economy, Standard, VedaX
+  },
+  assignedRoles: {
+    type: [String],
+    default: [],
+    // manually set – which admin roles can see this lead
   }
 });
 

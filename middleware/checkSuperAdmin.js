@@ -1,17 +1,16 @@
 import jwt from 'jsonwebtoken';
 import dotenv from "dotenv";
-import { ADMIN_ROLES } from '../constants/roles.js';
+import { SUPER_ADMIN_ROLE } from '../constants/roles.js';
 
 dotenv.config();
 
-const checkAdmin = (req, res, next) => {
+const checkSuperAdmin = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
     return res.status(401).json({ message: "Authorization header is missing" });
   }
 
-  // Ensure Bearer token format
   if (!authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Invalid authorization format" });
   }
@@ -24,15 +23,14 @@ const checkAdmin = (req, res, next) => {
       return res.status(401).json({ message: "Invalid token" });
     }
 
-    // Attach decoded user to request
     req.user = decoded;
 
-    if (!decoded.isAdmin || !ADMIN_ROLES.includes(decoded.role)) {
-      return res.status(403).json({ message: "Access denied. Admins only." });
+    if (!decoded.isAdmin || decoded.role !== SUPER_ADMIN_ROLE) {
+      return res.status(403).json({ message: "Access denied. Super admins only." });
     }
 
     next();
   });
 };
 
-export default checkAdmin;
+export default checkSuperAdmin;

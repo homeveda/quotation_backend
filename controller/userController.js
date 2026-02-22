@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import User from "../model/userModel.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import { ADMIN_ROLES } from "../constants/roles.js";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -34,7 +35,13 @@ const registerUser = async (req, res) => {
 
 const registerAdmin = async (req, res) => {
     try{
-        const { name, email, password, phone } = req.body;
+        const { name, email, password, phone, role } = req.body;
+
+        // Validate role
+        if (!role || !ADMIN_ROLES.includes(role)) {
+            return res.status(400).json({ message: `Invalid role. Must be one of: ${ADMIN_ROLES.join(', ')}` });
+        }
+
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if(existingUser){
@@ -48,10 +55,11 @@ const registerAdmin = async (req, res) => {
             email,
             password: hashedPassword,
             phone,
-            isAdmin: true   
+            isAdmin: true,
+            role,
         });
         await newUser.save();
-        res.status(201).json({ message: "Admin user registered successfully" });
+        res.status(201).json({ message: "Admin user registered successfully", role });
     }catch(err){
         console.log(err);
         res.status(500).json({message: "Server Error"});
@@ -73,11 +81,11 @@ const loginUser = async (req, res) => {
         }
         // Generate JWT
         const token = jwt.sign(
-            { userId: user._id, email: user.email, isAdmin: user.isAdmin },
+            { userId: user._id, email: user.email, isAdmin: user.isAdmin, role: user.role },
             process.env.JWT_SECRET || "defaultsecret",
             { expiresIn: "7d" }
         );
-        res.status(200).json({ message: "Login successful", token });
+        res.status(200).json({ message: "Login successful", token, role: user.role });
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server Error" });
@@ -88,7 +96,8 @@ const loginUser = async (req, res) => {
 const loginAdmin = async (req, res) => {
     try{
         const { email, password } = req.body;
-        // Find user by email
+
+        // Find user by email and isAdmin flag
         const user = await User.findOne({ email, isAdmin: true });
         if(!user){
             return res.status(400).json({ message: "Invalid email or password" });
@@ -100,11 +109,11 @@ const loginAdmin = async (req, res) => {
         }
         // Generate JWT
         const token = jwt.sign(
-            { userId: user._id, email: user.email, isAdmin: user.isAdmin },
+            { userId: user._id, email: user.email, isAdmin: user.isAdmin, role: user.role },
             process.env.JWT_SECRET || "defaultsecret",
             { expiresIn: "2d" }
         );
-        res.status(200).json({ message: "Admin login successful", token });
+        res.status(200).json({ message: "Admin login successful", token, role: user.role });
     }catch(err){
         console.log(err);
         res.status(500).json({message: "Server Error"});
@@ -198,6 +207,56 @@ const getAllUsers = async(req,res)=>{
     }
 };
 
+const getAllAdmins = async(req,res)=>{
+    try{
+        const admins = await User.find({ isAdmin: true }).select('-password -resetToken -resetTokenExpiry');
+        res.status(200).json({ admins });
+    }catch(err){
+        console.log(err);
+        res.status(500).json({message: "Server Error"});
+    }
+};
+
+const updateAdminRole = async(req,res)=>{
+    try{
+        const { adminId } = req.params;
+        const { role } = req.body;
+
+        if (!role || !ADMIN_ROLES.includes(role)) {
+            return res.status(400).json({ message: `Invalid role. Must be one of: ${ADMIN_ROLES.join(', ')}` });
+        }
+
+        const admin = await User.findOneAndUpdate(
+            { _id: adminId, isAdmin: true },
+            { role },
+            { new: true }
+        ).select('-password -resetToken -resetTokenExpiry');
+
+        if (!admin) {
+            return res.status(404).json({ message: "Admin not found" });
+        }
+
+        res.status(200).json({ message: "Admin role updated successfully", admin });
+    }catch(err){
+        console.log(err);
+        res.status(500).json({message: "Server Error"});
+    }
+};
+
+const deleteAdmin = async(req,res)=>{
+    try{
+        const { adminId } = req.params;
+        const admin = await User.findOneAndDelete({ _id: adminId, isAdmin: true });
+        if (!admin) {
+            return res.status(404).json({ message: "Admin not found" });
+        }
+        res.status(200).json({ message: "Admin deleted successfully" });
+    }catch(err){
+        console.log(err);
+        res.status(500).json({message: "Server Error"});
+    }
+};
+
 //Node mailer transporter setup
 
 const transporter = nodemailer.createTransport({
@@ -282,4 +341,4 @@ const userDetails = async(req,res)=>{
     }
 }
 
-export { registerUser, registerAdmin, getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers, loginUser ,loginAdmin, resetPassword, userDetails };
+export { registerUser, registerAdmin, getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers, getAllAdmins, updateAdminRole, deleteAdmin, loginUser ,loginAdmin, resetPassword, userDetails };

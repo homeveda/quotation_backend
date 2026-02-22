@@ -14,6 +14,7 @@ import designRouter from "../routes/design.js";
 import quotationRouter from "../routes/quotation.js";
 import projectInspectionRouter from "../routes/inspection.js";
 import materialRouter from "../routes/material.js";
+import architectRouter from "../routes/architect.js";
 
 import checkAdmin from '../middleware/checkAdmin.js';
 
@@ -54,6 +55,7 @@ app.use('/initiallead',checkAdmin,initialLeadRouter);
 app.use('/quotation', quotationRouter);
 app.use('/inspections', projectInspectionRouter);
 app.use('/materials', checkAdmin, materialRouter);
+app.use('/architect', checkAdmin, architectRouter);
 
 // app.listen(PORT, () => {
 //   console.log(`Server is running on port ${PORT}`);

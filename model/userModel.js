@@ -1,4 +1,5 @@
 import mongoose,{ Schema } from "mongoose";
+import { ALL_ROLES } from "../constants/roles.js";
 
 const userSchema = new Schema({
   name: {
@@ -23,6 +24,11 @@ const userSchema = new Schema({
   isAdmin: {
     type: Boolean,
     default: false,
+  },
+  role: {
+    type: String,
+    enum: ALL_ROLES,
+    default: 'user',
   },
   resetToken:{
     type: String,
