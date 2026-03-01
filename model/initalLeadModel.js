@@ -12,11 +12,11 @@ const initalLeadSchema = new Schema({
   },
   address: {
     type: String,
-    required: true,
+    
   },
   contactNumber: {
     type: String,
-    required: true,
+    
   },
   architectName: {
     type: String,

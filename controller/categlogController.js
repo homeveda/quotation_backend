@@ -141,10 +141,11 @@ const getAllCatelogs = async (req, res) => {
 
 const updateCatelog = async (req, res) => {
   try {
-    const name1 = req.params.name;
-    console.log(name1);
+    const id = req.params.id;
+    console.log("updateCatelog id:", id);
+    if (!id) return res.status(400).json({ message: "id param is required" });
     const { name, description, category, price, type, department, workType, displayedToClients } = req.body;
-    const catelog = await Catelog.findOne({ name: name1 });
+    const catelog = await Catelog.findById(id);
     if (!catelog) {
       return res.status(404).json({ message: "Catelog not found" });
     }
@@ -191,10 +192,11 @@ const updateCatelog = async (req, res) => {
   }
 };
 
-const getCatelogByName = async (req, res) => {
+const getCatelogById = async (req, res) => {
   try {
-    const { name } = req.params;
-    const catelog = await Catelog.findOne({ name });
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: "id param is required" });
+    const catelog = await Catelog.findById(id);
     if (!catelog) {
       return res.status(404).json({ message: "Catelog not found" });
     }
@@ -264,11 +266,11 @@ const deleteS3Object = async (key) => {
 
 const deleteCatelog = async (req, res) => {
   try {
-    const { name } = req.params;
-    if (!name) return res.status(400).json({ message: "Name param is required" });
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: "id param is required" });
 
     // Find the catalog first (so we can inspect links before deleting the DB doc)
-    const catelog = await Catelog.findOne({ name });
+    const catelog = await Catelog.findById(id);
     if (!catelog) {
       return res.status(404).json({ message: "Catelog not found" });
     }
@@ -294,7 +296,7 @@ const deleteCatelog = async (req, res) => {
     }
 
     // Delete the DB document regardless of S3 deletion outcome
-    await Catelog.findOneAndDelete({ name });
+    await Catelog.findByIdAndDelete(id);
 
     // Prepare response details about S3 deletions
     const s3Failures = s3Results.filter((r) => !r.ok);
@@ -439,7 +441,7 @@ const getCatelogGrouped = async (req, res) => {
 export {
   createCatelog,
   getAllCatelogs,
-  getCatelogByName,
+  getCatelogById,
   deleteCatelog,
   updateCatelog,
   getCatelogByCategory,

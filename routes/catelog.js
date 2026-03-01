@@ -1,4 +1,4 @@
-import {createCatelog, getAllCatelogs, getCatelogByName, deleteCatelog, updateCatelog,getCatelogByCategory,getCatelogByCategoryAndType,getCatelogByCategoryAndWorkType, getDepartments, getCatelogByDepartment, getCatelogByDepartmentAndWorkType, getCatelogGrouped} from '../controller/categlogController.js'
+import {createCatelog, getAllCatelogs, getCatelogById, deleteCatelog, updateCatelog,getCatelogByCategory,getCatelogByCategoryAndType,getCatelogByCategoryAndWorkType, getDepartments, getCatelogByDepartment, getCatelogByDepartmentAndWorkType, getCatelogGrouped} from '../controller/categlogController.js'
 
 import { Router } from "express";
 import { catelogUpload } from '../middleware/uploadMiddleware.js';
@@ -23,10 +23,10 @@ catelogRouter.get('/category/:category/type/:type', getCatelogByCategoryAndType)
 catelogRouter.get('/category/:category/workType/:workType', getCatelogByCategoryAndWorkType);
 // Get catelogs by category (generic - last)
 catelogRouter.get('/category/:category', getCatelogByCategory);
-// Get catelog by name
-catelogRouter.get('/:name', getCatelogByName);
-// Delete catelog by name
-catelogRouter.delete('/:name', deleteCatelog);
-//Update catelog
-catelogRouter.patch('/:name', catelogUpload, updateCatelog);
+// Get catelog by id
+catelogRouter.get('/:id', getCatelogById);
+// Delete catelog by id
+catelogRouter.delete('/:id', deleteCatelog);
+// Update catelog by id
+catelogRouter.patch('/:id', catelogUpload, updateCatelog);
 export default catelogRouter;
