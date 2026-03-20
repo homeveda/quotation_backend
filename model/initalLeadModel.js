@@ -34,6 +34,18 @@ const initalLeadSchema = new Schema({
     type : [String],
     // options which can be picked -> Builder, Economy, Standard, VedaX
   },
+  leadSource: {
+    type: String,
+    // source of the lead - e.g. Website, Referral, Social Media, Cold Call, etc.
+  },
+  expectedTimeline: {
+    type: String,
+    // expected timeline for the lead - e.g. ASAP, 1 Month, 3 Months, 6 Months
+  },
+  notes: {
+    type: String,
+    // additional notes about the lead
+  },
   assignedRoles: {
     type: [String],
     default: [],
