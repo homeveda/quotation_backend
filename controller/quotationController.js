@@ -61,10 +61,12 @@ const createQuotation = async (req, res) => {
             };
         });
 
-        const discount = Number(rawTotals.discount) || 0;
+        const discountPercent = Number(rawTotals.discountPercent) || 0;
+        const discountAmount = Number(rawTotals.discountAmount) || 0;
         const taxAmount = Number(rawTotals.taxAmount) || 0;
+        const taxPercent = Number(rawTotals.taxPercent) || 18;
         const freightInstallationHandling = Number(rawTotals.freightInstallationHandling) || 0;
-        const grandTotal = grossAmount - discount + taxAmount + freightInstallationHandling;
+        const grandTotal = grossAmount - discountAmount + taxAmount + freightInstallationHandling;
 
         const quotation = new Quotation({
             projectId,
@@ -73,7 +75,9 @@ const createQuotation = async (req, res) => {
             items: normalizedItems,
             totals: {
                 grossAmount,
-                discount,
+                discountPercent,
+                discountAmount,
+                taxPercent,
                 taxAmount,
                 freightInstallationHandling,
                 grandTotal
@@ -133,14 +137,18 @@ const updateQuotation = async (req, res) => {
             quotation.items = normalizedItems;
 
             // Recompute totals using provided rawTotals or previous values
-            const discount = (rawTotals && Number(rawTotals.discount)) || quotation.totals.discount || 0;
+            const discountPercent = (rawTotals && Number(rawTotals.discountPercent)) || quotation.totals.discountPercent || 0;
+            const discountAmount = (rawTotals && Number(rawTotals.discountAmount)) || quotation.totals.discountAmount || 0;
+            const taxPercent = (rawTotals && Number(rawTotals.taxPercent)) || quotation.totals.taxPercent || 18;
             const taxAmount = (rawTotals && Number(rawTotals.taxAmount)) || quotation.totals.taxAmount || 0;
             const freightInstallationHandling = (rawTotals && Number(rawTotals.freightInstallationHandling)) || quotation.totals.freightInstallationHandling || 0;
-            const grandTotal = grossAmount - discount + taxAmount + freightInstallationHandling;
+            const grandTotal = grossAmount - discountAmount + taxAmount + freightInstallationHandling;
 
             quotation.totals = {
                 grossAmount,
-                discount,
+                discountPercent,
+                discountAmount,
+                taxPercent,
                 taxAmount,
                 freightInstallationHandling,
                 grandTotal
@@ -148,13 +156,17 @@ const updateQuotation = async (req, res) => {
         } else if (rawTotals !== undefined) {
             // If only totals provided, allow updating discount/tax/freight and recompute grandTotal
             const grossAmount = quotation.totals.grossAmount || 0;
-            const discount = Number(rawTotals.discount) || quotation.totals.discount || 0;
+            const discountPercent = Number(rawTotals.discountPercent) || quotation.totals.discountPercent || 0;
+            const discountAmount = Number(rawTotals.discountAmount) || quotation.totals.discountAmount || 0;
+            const taxPercent = Number(rawTotals.taxPercent) || quotation.totals.taxPercent || 18;
             const taxAmount = Number(rawTotals.taxAmount) || quotation.totals.taxAmount || 0;
             const freightInstallationHandling = Number(rawTotals.freightInstallationHandling) || quotation.totals.freightInstallationHandling || 0;
-            const grandTotal = grossAmount - discount + taxAmount + freightInstallationHandling;
+            const grandTotal = grossAmount - discountAmount + taxAmount + freightInstallationHandling;
             quotation.totals = {
                 grossAmount,
-                discount,
+                discountPercent,
+                discountAmount,
+                taxPercent,
                 taxAmount,
                 freightInstallationHandling,
                 grandTotal
@@ -172,9 +184,9 @@ const updateQuotation = async (req, res) => {
 // Delete a quotation by its Mongo _id (in params)
 const deleteQuotation = async (req, res) => {
     try {
-        const { projectId } = req.params;
-        if (!projectId) return res.status(400).json({ message: "Project id is required in params" });
-        const deleted = await Quotation.findOneAndDelete({ id:projectId });
+        const { quotationId } = req.params;
+        if (!quotationId) return res.status(400).json({ message: "Quotation id is required in params" });
+        const deleted = await Quotation.findByIdAndDelete(quotationId);
         if (!deleted) return res.status(404).json({ message: "Quotation not found" });
         res.status(200).json({ message: "Quotation deleted", quotation: deleted });
     } catch (err) {

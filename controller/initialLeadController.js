@@ -36,7 +36,7 @@ const getAssignedRoles = (requirements = []) => {
 
 const createInitalLead = async (req, res) => {
   try {
-    const { name, address, contactNumber, architectName, architectContact, architectAddress, leadSource, expectedTimeline, notes } = req.body;
+    const { name, address, contactNumber, architectName, architectContact, architectAddress, leadSource, expectedTimelineStart, expectedTimelineEnd, notes } = req.body;
     const requirements = req.body.Requirements || [];
     const visibleTo = Array.isArray(req.body.visibleTo) ? req.body.visibleTo : [];
       const newLead = new InitalLead({
@@ -50,7 +50,8 @@ const createInitalLead = async (req, res) => {
         Requirements: requirements,
         category: req.body.category || [],
         leadSource: leadSource || "",
-        expectedTimeline: expectedTimeline || "",
+        expectedTimelineStart: expectedTimelineStart ? new Date(expectedTimelineStart) : null,
+        expectedTimelineEnd: expectedTimelineEnd ? new Date(expectedTimelineEnd) : null,
         notes: notes || "",
         assignedRoles: visibleTo,
       });
@@ -111,7 +112,7 @@ const deleteInitialLead = async (req, res) => {
 
 const updateInitialLead = async (req, res) => {
     try {
-      const { id, name, address, contactNumber, architectName, architectContact, architectAddress, leadSource, expectedTimeline, notes } = req.body;
+      const { id, name, address, contactNumber, architectName, architectContact, architectAddress, leadSource, expectedTimelineStart, expectedTimelineEnd, notes } = req.body;
         if (!id) {
             return res.status(400).json({ message: "Lead id is required" });
         }
@@ -129,7 +130,8 @@ const updateInitialLead = async (req, res) => {
         lead.architectContact = updatedArchitectContact;
         lead.architectAddress = updatedArchitectAddress;
         lead.leadSource = leadSource || lead.leadSource;
-        lead.expectedTimeline = expectedTimeline || lead.expectedTimeline;
+        lead.expectedTimelineStart = expectedTimelineStart ? new Date(expectedTimelineStart) : lead.expectedTimelineStart;
+        lead.expectedTimelineEnd = expectedTimelineEnd ? new Date(expectedTimelineEnd) : lead.expectedTimelineEnd;
         lead.notes = notes || lead.notes;
         // If architect fields changed, try registering new architect silently
         if (architectName || architectContact) {

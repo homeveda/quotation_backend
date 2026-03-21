@@ -37,8 +37,9 @@ const quotationSchema = new Schema(
         totals: {
             grossAmount: { type: Number, default: 0 },
             freightInstallationHandling: { type: Number, default: 0 },
-            discount: { type: Number, default: 18 },
-            taxPercent: { type: Number, default: 0 },
+            discountPercent: { type: Number, default: 0 },
+            discountAmount: { type: Number, default: 0 },
+            taxPercent: { type: Number, default: 18 },
             taxAmount: { type: Number, default: 0 },
             grandTotal: { type: Number, default: 0 }
         },

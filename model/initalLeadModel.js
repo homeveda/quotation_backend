@@ -38,9 +38,13 @@ const initalLeadSchema = new Schema({
     type: String,
     // source of the lead - e.g. Website, Referral, Social Media, Cold Call, etc.
   },
-  expectedTimeline: {
-    type: String,
-    // expected timeline for the lead - e.g. ASAP, 1 Month, 3 Months, 6 Months
+  expectedTimelineStart: {
+    type: Date,
+    // expected start date for the lead
+  },
+  expectedTimelineEnd: {
+    type: Date,
+    // expected end date for the lead
   },
   notes: {
     type: String,
