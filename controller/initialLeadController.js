@@ -3,12 +3,12 @@ import Architect from "../model/architectModel.js";
 import { v4 as UUIDV4 } from "uuid";
 
 // Silently attempt to register architect – ignores duplicates, never throws
-const tryCreateArchitect = async ({ architectName, architectContact, architectAddress }) => {
+const tryCreateArchitect = async ({ architectName, architectContact, architectAddress,architectCategory }) => {
   try {
     if (!architectName || !architectContact) return;
     const existing = await Architect.findOne({ architectName, architectContact });
     if (existing) return; // duplicate – skip
-    await new Architect({ architectName, architectContact, architectAddress }).save();
+    await new Architect({ architectName, architectContact, architectAddress,architectCategory }).save();
   } catch (_) {
     // ignore any error so the lead operation is never blocked
   }
@@ -56,7 +56,7 @@ const createInitalLead = async (req, res) => {
         assignedRoles: visibleTo,
       });
     await newLead.save();
-    await tryCreateArchitect({ architectName, architectContact, architectAddress: architectAddress || req.body.architectCity });
+    await tryCreateArchitect({ architectName, architectContact, architectAddress: architectAddress || req.body.architectCity, architectCategory: req.body.architectCategory || "" });
     res
       .status(201)
       .json({ message: "Initial Lead created successfully", lead: newLead });
@@ -135,11 +135,12 @@ const updateInitialLead = async (req, res) => {
         lead.notes = notes || lead.notes;
         // If architect fields changed, try registering new architect silently
         if (architectName || architectContact) {
-          await tryCreateArchitect({ architectName: updatedArchitectName, architectContact: updatedArchitectContact, architectAddress: updatedArchitectAddress });
+          await tryCreateArchitect({ architectName: updatedArchitectName, architectContact: updatedArchitectContact, architectAddress: updatedArchitectAddress, architectCategory: req.body.architectCategory || "" });
         }
         const updatedRequirements = req.body.Requirements || lead.Requirements;
         lead.Requirements = updatedRequirements;
         lead.category = req.body.category || lead.category;
+        lead.architectCategory = req.body.architectCategory || lead.architectCategory;
         lead.assignedRoles = Array.isArray(req.body.visibleTo) ? req.body.visibleTo : lead.assignedRoles;
         await lead.save();
         res.status(200).json({ message: "Initial Lead updated successfully", lead });

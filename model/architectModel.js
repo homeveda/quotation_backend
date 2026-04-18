@@ -12,6 +12,9 @@ const architectSchema = new Schema(
     architectAddress: {
       type: String,
     },
+    architectCategory :{
+      type:String,
+    }
   },
   { timestamps: true },
 );

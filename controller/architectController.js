@@ -2,7 +2,7 @@ import Architect from "../model/architectModel.js";
 
 const createArchitect = async (req, res) => {
   try {
-    const { architectName, architectContact, architectAddress } = req.body;
+    const { architectName, architectContact, architectAddress, architectCategory } = req.body;
 
     const existing = await Architect.findOne({ architectName, architectContact });
     if (existing) {
@@ -13,6 +13,7 @@ const createArchitect = async (req, res) => {
       architectName,
       architectContact,
       architectAddress,
+      architectCategory,
     });
     await newArchitect.save();
     res.status(201).json({ message: "Architect created successfully", architect: newArchitect });
@@ -44,7 +45,7 @@ const getArchitectById = async (req, res) => {
 
 const updateArchitect = async (req, res) => {
   try {
-    const { architectName, architectContact, architectAddress } = req.body;
+    const { architectName, architectContact, architectAddress, architectCategory } = req.body;
     const architect = await Architect.findById(req.params.id);
     if (!architect) {
       return res.status(404).json({ message: "Architect not found" });
@@ -52,6 +53,7 @@ const updateArchitect = async (req, res) => {
     architect.architectName = architectName || architect.architectName;
     architect.architectContact = architectContact || architect.architectContact;
     architect.architectAddress = architectAddress || architect.architectAddress;
+    architect.architectCategory = architectCategory || architect.architectCategory;
     await architect.save();
     res.status(200).json({ message: "Architect updated successfully", architect });
   } catch (error) {
