@@ -12,35 +12,35 @@ const projectInspectionSchema = new Schema({
     },
     plumbingStatus:{
         type: String,
-        enum:["Pending","Completed","In Progress","Not Required"],
+
     },
     plumbingVideo:{
         type:String,
     },
     electricityStatus:{
         type: String,
-        enum:["Pending","Completed","In Progress","Not Required"],
+      
     },
     electricityVideo:{
         type:String,
     },
     chimneyPointStatus:{
         type: String,
-        enum:["Pending","Completed","In Progress","Not Required"],
+      
     },
     chimneyPointVideo:{
         type:String,
     },
     falseCeilingStatus:{
         type: String,
-        enum:["Pending","Completed","In Progress","Not Required"],
+        
     },
     falseCeilingVideo:{
         type:String,
     },
     flooringStatus:{
         type: String,
-        enum:["Pending","Completed","In Progress","Not Required"],
+      
     },
     flooringVideo:{
         type:String,
