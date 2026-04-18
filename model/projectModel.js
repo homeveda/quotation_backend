@@ -75,6 +75,10 @@ const projectSchema = new Schema({
         type: wardrobeSchema,
         required: false
     },
+    isActive :{
+        type: Boolean,
+        default: false,
+    }
 });
 
 const Project = new mongoose.model("Project", projectSchema);

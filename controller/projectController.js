@@ -405,4 +405,43 @@ const deleteProjectFile = async (req, res) => {
     }
 };
 
-export { getProjectsOfUser, createProject, updateProject, getProjectDetails, deleteProject, deleteProjectFile };
+
+const toggleIsActive = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) return res.status(400).json({ message: "Project id is required" });
+
+        const project = await Project.findOne({ id });
+        if (!project) return res.status(404).json({ message: "Project not found" });
+
+        // If `isActive` is explicitly provided in the body, use that value.
+        // Otherwise flip the current value (toggle).
+        if (typeof req.body.isActive === "boolean") {
+            project.isActive = req.body.isActive;
+        } else {
+            project.isActive = !project.isActive;
+        }
+
+        await project.save();
+        res.status(200).json({
+            message: `Project is now ${project.isActive ? "active" : "inactive"}`,
+            isActive: project.isActive,
+            project,
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+const getActiveProjects = async (req, res) => {
+    try {
+        const projects = await Project.find({ isActive: true });
+        res.status(200).json({ projects });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export { getProjectsOfUser, createProject, updateProject, getProjectDetails, deleteProject, deleteProjectFile, toggleIsActive, getActiveProjects };
