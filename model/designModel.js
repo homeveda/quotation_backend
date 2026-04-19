@@ -7,8 +7,18 @@ const itemSchema = new Schema({
     imageLink: {
         type: String,
     },
+    imageFileType: {
+        type: String,
+        enum: ["image", "pdf", "doc"],
+        default: "image"
+    },
     designLink: {
         type: String,
+    },
+    designFileType: {
+        type: String,
+        enum: ["image", "pdf", "doc"],
+        default: "image"
     }
 });
 

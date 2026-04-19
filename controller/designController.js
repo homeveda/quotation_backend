@@ -4,19 +4,33 @@ import fs from "fs";
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "../config/aws.js";
 
-const uploadImageToS3 = async (file, projectId) => {
+// Determine file category from MIME type
+const getFileType = (mimetype) => {
+    if (!mimetype) return "image";
+    if (mimetype === "application/pdf") return "pdf";
+    if (
+        mimetype === "application/msword" ||
+        mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ) return "doc";
+    return "image";
+};
+
+const uploadFileToS3 = async (file, projectId) => {
     if(!file) return null;
     const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
     const filename = `${Date.now()}-${file.originalname}`.replace(/\s+/g, "_");
     const key = `projects/${projectId}/designs/${filename}`;
     const Body = file.buffer ? file.buffer : fs.createReadStream(file.path);
 
+    // Set Content-Disposition for non-image files so browsers handle them properly
+    const isNonImage = getFileType(file.mimetype) !== "image";
     const params = {
         Bucket: bucket,
         Key: key,
         Body,
         ContentType: file.mimetype,
         ACL: "public-read",
+        ...(isNonImage && { ContentDisposition: "inline" }),
     };
 
     try{
@@ -94,7 +108,7 @@ const createDesign = async (req, res) => {
       return res.status(400).json({ message: "No items provided" });
     }
 
-    // ✅ 2. Handle files
+    // ✅ 2. Handle files (images, PDFs, docs)
     for (const file of req.files || []) {
       const match = file.fieldname.match(/items\[(\d+)\]\[(image|design)\]/);
       if (!match) continue;
@@ -104,10 +118,17 @@ const createDesign = async (req, res) => {
 
       if (!itemsMap[index]) itemsMap[index] = {};
 
-      const url = await uploadImageToS3(file, projectId);
+      const url = await uploadFileToS3(file, projectId);
+      const fileType = getFileType(file.mimetype);
 
-      if (type === "image") itemsMap[index].imageLink = url;
-      if (type === "design") itemsMap[index].designLink = url;
+      if (type === "image") {
+        itemsMap[index].imageLink = url;
+        itemsMap[index].imageFileType = fileType;
+      }
+      if (type === "design") {
+        itemsMap[index].designLink = url;
+        itemsMap[index].designFileType = fileType;
+      }
     }
 
     // ✅ 3. Save to DB
@@ -145,13 +166,15 @@ const updateDesignItem = async (req, res) => {
         if (imageFile) {
             // delete old file from S3 (best effort)
             if (item.imageLink) await deleteFileFromS3(item.imageLink);
-            const url = await uploadImageToS3(imageFile, design.projectId || design._id.toString());
+            const url = await uploadFileToS3(imageFile, design.projectId || design._id.toString());
             item.imageLink = typeof url === 'string' ? url : item.imageLink;
+            item.imageFileType = getFileType(imageFile.mimetype);
         }
         if (designFile) {
             if (item.designLink) await deleteFileFromS3(item.designLink);
-            const url = await uploadImageToS3(designFile, design.projectId || design._id.toString());
+            const url = await uploadFileToS3(designFile, design.projectId || design._id.toString());
             item.designLink = typeof url === 'string' ? url : item.designLink;
+            item.designFileType = getFileType(designFile.mimetype);
         }
 
         await design.save();
