@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import User from "../model/userModel.js";
+import Project from "../model/projectModel.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import { ADMIN_ROLES } from "../constants/roles.js";
@@ -341,4 +342,38 @@ const userDetails = async(req,res)=>{
     }
 }
 
-export { registerUser, registerAdmin, getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers, getAllAdmins, updateAdminRole, deleteAdmin, loginUser ,loginAdmin, resetPassword, userDetails };
+const getUsersWithInactiveProjects = async(req,res)=>{
+    try{
+        // Find all projects with isActive = false
+        const inactiveProjects = await Project.find({ isActive: false });
+        
+        // Get unique user emails from inactive projects
+        const inactiveProjectUserEmails = [...new Set(inactiveProjects.map(project => project.userEmail))];
+        
+        // Find all projects to get users who have projects
+        const allProjects = await Project.find({});
+        const usersWithProjects = new Set(allProjects.map(project => project.userEmail));
+        
+        // Find all non-admin users
+        const allUsers = await User.find({ isAdmin: false }).select('-password -resetToken -resetTokenExpiry');
+        
+        // Filter users who either have no projects OR have inactive projects
+        const filteredUsers = allUsers.filter(user => {
+            const hasNoProjects = !usersWithProjects.has(user.email);
+            const hasInactiveProjects = inactiveProjectUserEmails.includes(user.email);
+            return hasNoProjects || hasInactiveProjects;
+        });
+        
+        // If no users found, return 404
+        if(filteredUsers.length === 0){
+            return res.status(404).json({ message: "No users found" });
+        }
+        
+        res.status(200).json({ users: filteredUsers });
+    }catch(err){
+        console.log(err);
+        res.status(500).json({message: "Server Error"});
+    }
+}
+
+export { registerUser, registerAdmin, getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers, getAllAdmins, updateAdminRole, deleteAdmin, loginUser ,loginAdmin, resetPassword, userDetails, getUsersWithInactiveProjects };

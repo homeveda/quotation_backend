@@ -20,7 +20,7 @@ const checkSuperAdmin = (req, res, next) => {
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
       console.error("Token verification failed:", err);
-      return res.status(401).json({ message: "Invalid token" });
+      return res.status(401).json({ message: "Login again" });
     }
 
     req.user = decoded;

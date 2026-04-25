@@ -1,6 +1,6 @@
 import { Router } from "express";
 const userRouter = Router();
-import { registerUser, registerAdmin, changePassword, updateUserDetails, userDetails, forgotPassword, deleteUser, getAllUsers, getAllAdmins, updateAdminRole, deleteAdmin, loginUser, loginAdmin, resetPassword } from "../controller/userController.js";
+import { registerUser, registerAdmin, changePassword, updateUserDetails, userDetails, forgotPassword, deleteUser, getAllUsers, getAllAdmins, updateAdminRole, deleteAdmin, loginUser, loginAdmin, resetPassword, getUsersWithInactiveProjects } from "../controller/userController.js";
 import checkAdmin from "../middleware/checkAdmin.js";
 import checkSuperAdmin from "../middleware/checkSuperAdmin.js";
 
@@ -39,5 +39,8 @@ userRouter.patch('/admins/:adminId/role', checkSuperAdmin, updateAdminRole);
 userRouter.delete('/admins/:adminId', checkSuperAdmin, deleteAdmin);
 
 userRouter.post('/admin/login', loginAdmin);
+
+// Get users with inactive projects
+userRouter.get('/inactive-projects', getUsersWithInactiveProjects);
 
 export default userRouter;
