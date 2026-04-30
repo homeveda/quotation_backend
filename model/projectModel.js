@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 const kitchenSchema = new Schema({
     kitchenType: {
         type: String,
-        enum: ["L-Shape","U-Shape","Parallel","Straight"]
+        enum: ["Semi Modular","Fully Modular"]
     },
     requiremntsOfCounter:{
         type: String,
