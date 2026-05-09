@@ -201,7 +201,7 @@ const deleteDesignItem = async (req, res) => {
         if (item.imageLink) await deleteFileFromS3(item.imageLink);
         if (item.designLink) await deleteFileFromS3(item.designLink);
 
-        item.remove();
+        design.items.id(itemId).deleteOne();
         await design.save();
         return res.status(200).json({ message: 'Item deleted', design });
     } catch (err) {
