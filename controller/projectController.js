@@ -444,4 +444,4 @@ const getActiveProjects = async (req, res) => {
     }
 };
 
-export { getProjectsOfUser, createProject, updateProject, getProjectDetails, deleteProject, deleteProjectFile, toggleIsActive, getActiveProjects };
+export { getProjectsOfUser, createProject, updateProject, getProjectDetails, deleteProject, deleteProjectFile, toggleIsActive, getActiveProjects };

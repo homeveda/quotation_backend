@@ -7,11 +7,14 @@ import { ADMIN_ROLES } from "../constants/roles.js";
 
 import dotenv from "dotenv";
 dotenv.config();
+// Only super admin can see all users
+const SUPER_ADMIN_ROLE = 'super admin';
 
 
 const registerUser = async (req, res) => {
      try{
         const { name, email, password, address, phone } = req.body;
+        const assignedRoles = Array.isArray(req.body.assignedRoles) ? req.body.assignedRoles : [];
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if(existingUser){
@@ -25,7 +28,8 @@ const registerUser = async (req, res) => {
             email,
             password: hashedPassword,
             address,
-            phone
+            phone,
+            assignedRoles
         });
         await newUser.save();
         res.status(201).json({ message: "User registered successfully" });
@@ -150,6 +154,7 @@ const changePassword = async(req,res)=>{
 const updateUserDetails = async(req,res)=>{
     try{
         const { email, name, address, phone } = req.body;
+        const assignedRoles = Array.isArray(req.body.assignedRoles) ? req.body.assignedRoles : undefined;
         // Find user by email
         const user = await User.findOne({ email });
         if(!user){
@@ -159,6 +164,9 @@ const updateUserDetails = async(req,res)=>{
         user.name = name || user.name;
         user.address = address || user.address;
         user.phone = phone || user.phone;
+        if (assignedRoles !== undefined) {
+            user.assignedRoles = assignedRoles;
+        }
         await user.save();
         res.status(200).json({ message: "User details updated successfully" });
     }catch(err){
@@ -200,7 +208,23 @@ const deleteUser = async(req,res)=>{
 
 const getAllUsers = async(req,res)=>{
     try{
-        const users = await User.find({});
+        const role = req.user?.role || '';
+        
+        let users;
+        if (role === SUPER_ADMIN_ROLE) {
+            // super admin sees all non-admin users
+            users = await User.find({ isAdmin: false });
+        } else {
+            // every other admin only sees non-admin users explicitly assigned to their role or with empty assignedRoles
+            users = await User.find({
+                isAdmin: false,
+                $or: [
+                    { assignedRoles: role },
+                    { assignedRoles: [] }
+                ]
+            });
+        }
+        
         res.status(200).json({ users });
     }catch(err){
         console.log(err);
@@ -344,6 +368,8 @@ const userDetails = async(req,res)=>{
 
 const getUsersWithInactiveProjects = async(req,res)=>{
     try{
+        const role = req.user?.role || '';
+        
         // Find all projects with isActive = false
         const inactiveProjects = await Project.find({ isActive: false });
         
@@ -354,8 +380,21 @@ const getUsersWithInactiveProjects = async(req,res)=>{
         const allProjects = await Project.find({});
         const usersWithProjects = new Set(allProjects.map(project => project.userEmail));
         
-        // Find all non-admin users
-        const allUsers = await User.find({ isAdmin: false }).select('-password -resetToken -resetTokenExpiry');
+        // Find all non-admin users based on role
+        let allUsers;
+        if (role === SUPER_ADMIN_ROLE) {
+            // super admin sees all non-admin users
+            allUsers = await User.find({ isAdmin: false }).select('-password -resetToken -resetTokenExpiry');
+        } else {
+            // every other admin only sees non-admin users explicitly assigned to their role or with empty assignedRoles
+            allUsers = await User.find({
+                isAdmin: false,
+                $or: [
+                    { assignedRoles: role },
+                    { assignedRoles: [] }
+                ]
+            }).select('-password -resetToken -resetTokenExpiry');
+        }
         
         // Filter users who either have no projects OR have inactive projects
         const filteredUsers = allUsers.filter(user => {

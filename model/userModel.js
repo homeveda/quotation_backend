@@ -35,6 +35,10 @@ const userSchema = new Schema({
   },
   resetTokenExpiry:{
     type: Date,
+  },
+  assignedRoles: {
+    type: [String],
+    default: [],
   }
 }, { timestamps: true });
 
