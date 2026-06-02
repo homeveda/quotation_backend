@@ -154,7 +154,6 @@ const changePassword = async(req,res)=>{
 const updateUserDetails = async(req,res)=>{
     try{
         const { email, name, address, phone } = req.body;
-        const assignedRoles = Array.isArray(req.body.assignedRoles) ? req.body.assignedRoles : undefined;
         // Find user by email
         const user = await User.findOne({ email });
         if(!user){
@@ -164,9 +163,6 @@ const updateUserDetails = async(req,res)=>{
         user.name = name || user.name;
         user.address = address || user.address;
         user.phone = phone || user.phone;
-        if (assignedRoles !== undefined) {
-            user.assignedRoles = assignedRoles;
-        }
         await user.save();
         res.status(200).json({ message: "User details updated successfully" });
     }catch(err){
@@ -215,12 +211,13 @@ const getAllUsers = async(req,res)=>{
             // super admin sees all non-admin users
             users = await User.find({ isAdmin: false });
         } else {
-            // every other admin only sees non-admin users explicitly assigned to their role or with empty assignedRoles
+            // every other admin only sees non-admin users explicitly assigned to their role or with empty assignedRoles or without assignedRoles field
             users = await User.find({
                 isAdmin: false,
                 $or: [
                     { assignedRoles: role },
-                    { assignedRoles: [] }
+                    { assignedRoles: [] },
+                    { assignedRoles: { $exists: false } }
                 ]
             });
         }
@@ -386,12 +383,13 @@ const getUsersWithInactiveProjects = async(req,res)=>{
             // super admin sees all non-admin users
             allUsers = await User.find({ isAdmin: false }).select('-password -resetToken -resetTokenExpiry');
         } else {
-            // every other admin only sees non-admin users explicitly assigned to their role or with empty assignedRoles
+            // every other admin only sees non-admin users explicitly assigned to their role or with empty assignedRoles or without assignedRoles field
             allUsers = await User.find({
                 isAdmin: false,
                 $or: [
                     { assignedRoles: role },
-                    { assignedRoles: [] }
+                    { assignedRoles: [] },
+                    { assignedRoles: { $exists: false } }
                 ]
             }).select('-password -resetToken -resetTokenExpiry');
         }
