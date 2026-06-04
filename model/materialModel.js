@@ -8,7 +8,7 @@ const materialItemsSchema = new Schema({
     color:{
         type: String,
     },
-    imageLink:{
+    fileLink:{
         type: String,
     },
 

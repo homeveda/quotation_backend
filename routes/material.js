@@ -1,5 +1,5 @@
 import express from 'express';
-import upload from '../middleware/uploadMiddleware.js';
+import { materialFileUpload } from '../middleware/uploadMiddleware.js';
 import {
   getMaterials,
   createMaterial,
@@ -13,11 +13,11 @@ const router = express.Router();
 // GET: Fetch all materials for a project
 router.get('/:projectId', getMaterials);
 
-// POST: Create/add a material item (with optional image upload)
-router.post('/:projectId', upload.single('image'), createMaterial);
+// POST: Create/add a material item (with optional file upload: images, PDF, DOCS, XLSX)
+router.post('/:projectId', materialFileUpload, createMaterial);
 
-// PATCH: Update a specific material item (with optional image upload)
-router.patch('/:projectId/:materialId', upload.single('image'), updateMaterial);
+// PATCH: Update a specific material item (with optional file upload: images, PDF, DOCS, XLSX)
+router.patch('/:projectId/:materialId', materialFileUpload, updateMaterial);
 
 // DELETE: Delete a specific material item
 router.delete('/:projectId/:materialId', deleteMaterial);

@@ -2,12 +2,12 @@ import Material from "../model/materialModel.js";
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "../config/aws.js";
 
-// Upload image to S3
-const uploadMaterialImage = async (file, projectId) => {
+// Upload file (image/document) to S3
+const uploadMaterialFile = async (file, projectId) => {
   if (!file) return null;
   const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
   const filename = `${Date.now()}-${file.originalname}`.replace(/\s+/g, "_");
-  const key = `projects/${projectId}/material/${filename}`;
+  const key = `projects/${projectId}/materials/${filename}`;
 
   const params = {
     Bucket: bucket,
@@ -21,10 +21,10 @@ const uploadMaterialImage = async (file, projectId) => {
     const command = new PutObjectCommand(params);
     await s3.send(command);
     const fileUrl = `https://${bucket}.s3.${process.env.AWS_REGION_HV}.amazonaws.com/${key}`;
-    console.log("✅ Material image uploaded:", fileUrl);
+    console.log("✅ Material file uploaded:", fileUrl);
     return fileUrl;
   } catch (err) {
-    console.error("❌ Material image upload failed:", err);
+    console.error("❌ Material file upload failed:", err);
     throw err;
   }
 };
@@ -86,16 +86,16 @@ const createMaterial = async (req, res) => {
       return res.status(400).json({ message: "Material name is required" });
     }
 
-    // Upload image if provided
-    let imageLink = null;
+    // Upload file if provided
+    let fileLink = null;
     if (req.file) {
-      imageLink = await uploadMaterialImage(req.file, projectId);
+      fileLink = await uploadMaterialFile(req.file, projectId);
     }
 
     const materialItem = {
       name,
       color: color || "",
-      imageLink,
+      fileLink,
     };
 
     // Find existing material document or create new one
@@ -147,34 +147,34 @@ const updateMaterial = async (req, res) => {
     if (name !== undefined) item.name = name;
     if (color !== undefined) item.color = color;
 
-    // Handle image deletion
-    if (removeImage === 'true' && item.imageLink) {
+    // Handle file deletion
+    if (removeImage === 'true' && item.fileLink) {
       const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
       const urlPattern = new RegExp(`https://${bucket}\\.s3\\.[a-z0-9-]+\\.amazonaws\\.com/(.+)`);
-      const match = item.imageLink.match(urlPattern);
+      const match = item.fileLink.match(urlPattern);
       
       if (match && match[1]) {
         await deleteS3Object(match[1]);
       }
       
-      item.imageLink = null;
+      item.fileLink = null;
     }
 
-    // Handle new image upload
+    // Handle new file upload
     if (req.file) {
-      // Delete old image if exists
-      if (item.imageLink) {
+      // Delete old file if exists
+      if (item.fileLink) {
         const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
         const urlPattern = new RegExp(`https://${bucket}\\.s3\\.[a-z0-9-]+\\.amazonaws\\.com/(.+)`);
-        const match = item.imageLink.match(urlPattern);
+        const match = item.fileLink.match(urlPattern);
         
         if (match && match[1]) {
           await deleteS3Object(match[1]);
         }
       }
       
-      // Upload new image
-      item.imageLink = await uploadMaterialImage(req.file, projectId);
+      // Upload new file
+      item.fileLink = await uploadMaterialFile(req.file, projectId);
     }
 
     await material.save();
@@ -207,11 +207,11 @@ const deleteMaterial = async (req, res) => {
       return res.status(404).json({ message: "Material item not found" });
     }
 
-    // Delete image from S3 if exists
-    if (item.imageLink) {
+    // Delete file from S3 if exists
+    if (item.fileLink) {
       const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
       const urlPattern = new RegExp(`https://${bucket}\\.s3\\.[a-z0-9-]+\\.amazonaws\\.com/(.+)`);
-      const match = item.imageLink.match(urlPattern);
+      const match = item.fileLink.match(urlPattern);
       
       if (match && match[1]) {
         const result = await deleteS3Object(match[1]);
@@ -247,13 +247,13 @@ const deleteAllMaterials = async (req, res) => {
       return res.status(404).json({ message: "No materials found for this project" });
     }
 
-    // Delete all images from S3
+    // Delete all files from S3
     const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
     const urlPattern = new RegExp(`https://${bucket}\\.s3\\.[a-z0-9-]+\\.amazonaws\\.com/(.+)`);
 
     for (const item of material.materials) {
-      if (item.imageLink) {
-        const match = item.imageLink.match(urlPattern);
+      if (item.fileLink) {
+        const match = item.fileLink.match(urlPattern);
         if (match && match[1]) {
           await deleteS3Object(match[1]);
         }
