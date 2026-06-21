@@ -51,7 +51,7 @@ app.use('/user', userRouter);
 app.use('/project', projectRouter);
 app.use('/designs', checkAdmin, designRouter);
 app.use('/catelog',checkAdmin, catelogRouter);
-app.use('/initiallead',checkAdmin,initialLeadRouter);
+app.use('/initiallead',initialLeadRouter);
 app.use('/quotation', quotationRouter);
 app.use('/inspections', projectInspectionRouter);
 app.use('/materials', checkAdmin, materialRouter);
