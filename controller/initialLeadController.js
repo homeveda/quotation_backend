@@ -56,7 +56,9 @@ const createInitalLead = async (req, res) => {
         assignedRoles: visibleTo,
       });
     await newLead.save();
-    await tryCreateArchitect({ architectName, architectContact, architectAddress: architectAddress || req.body.architectCity, architectCategory: req.body.architectCategory || "" });
+    if (architectName || architectContact || architectAddress) {
+      await tryCreateArchitect({ architectName, architectContact, architectAddress: architectAddress || req.body.architectCity, architectCategory: req.body.architectCategory || "" });
+    }
     res
       .status(201)
       .json({ message: "Initial Lead created successfully", lead: newLead });
