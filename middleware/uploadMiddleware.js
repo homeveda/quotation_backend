@@ -36,7 +36,7 @@ const materialUpload = multer({
   storage,
   fileFilter: materialFileFilter,
   limits: {
-    fileSize: 50 * 1024 * 1024 // 50MB limit for materials
+    fileSize: 200 * 1024 * 1024 // 50MB limit for materials
   }
 });
 
