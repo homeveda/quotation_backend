@@ -36,7 +36,7 @@ const materialUpload = multer({
   storage,
   fileFilter: materialFileFilter,
   limits: {
-    fileSize: 200 * 1024 * 1024 // 50MB limit for materials
+    fileSize: 500 * 1024 * 1024 // 500MB limit for materials
   }
 });
 
@@ -49,5 +49,6 @@ export const catelogUpload = upload.fields([
 export const singleImage = upload.single('image');
 export const singleVideo = upload.single('video');
 export const materialFileUpload = materialUpload.single('file');
+export const orderFileUpload = materialUpload.array('files', 10);
 
 export default upload;

@@ -15,6 +15,7 @@ import quotationRouter from "../routes/quotation.js";
 import projectInspectionRouter from "../routes/inspection.js";
 import materialRouter from "../routes/material.js";
 import architectRouter from "../routes/architect.js";
+import orderRouter from "../routes/order.js";
 
 import checkAdmin from '../middleware/checkAdmin.js';
 
@@ -43,8 +44,8 @@ app.use(async (req, res, next) => {
   }
 });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(morgan('dev'));
 
 app.use('/user', userRouter);
@@ -56,6 +57,7 @@ app.use('/quotation', quotationRouter);
 app.use('/inspections', projectInspectionRouter);
 app.use('/materials', checkAdmin, materialRouter);
 app.use('/architect', checkAdmin, architectRouter);
+app.use('/orders', checkAdmin, orderRouter);
 
 // app.listen(PORT, () => {
 //   console.log(`Server is running on port ${PORT}`);

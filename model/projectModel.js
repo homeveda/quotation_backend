@@ -65,7 +65,6 @@ const projectSchema = new Schema({
     },
     status:{
         type: String,
-        enum:["LEAD","DESIGN","QUOTATION","10% TOKEN","FINAL MEASUREMENT","FINAL DRAWINGS","50% PAYMENT","FACTORY ORDER","SITE READY CHECK","FACTORY FULL PAYMENT","DISPATCH","90% CLIENT PAYMENT","INSTALLATION","QUALITY CHECK","HANDOVER","10% FINAL PAYMENT","AFTER SALES"],
     },
     kitchen: {
         type: kitchenSchema,

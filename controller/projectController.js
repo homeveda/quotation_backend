@@ -112,16 +112,8 @@ const createProject = async (req, res) => {
         if (!projectHead) return res.status(400).json({ message: "projectHead is required" });
 
                 const projectData = { id, userEmail, architectName, category, projectHead };
-                // optional status with enum validation
+                // optional status
                 if (status !== undefined) {
-                        const allowedStatus = [
-                            "LEAD","DESIGN","QUOTATION","10% TOKEN","FINAL MEASUREMENT","FINAL DRAWINGS",
-                            "50% PAYMENT","FACTORY ORDER","SITE READY CHECK","FACTORY FULL PAYMENT","DISPATCH",
-                            "90% CLIENT PAYMENT","INSTALLATION","QUALITY CHECK","HANDOVER","10% FINAL PAYMENT","AFTER SALES"
-                        ];
-                        if (!allowedStatus.includes(status)) {
-                                return res.status(400).json({ message: "Invalid status" });
-                        }
                         projectData.status = status;
                 }
         if (kitchen) projectData.kitchen = kitchen;
@@ -188,14 +180,6 @@ const updateProject = async (req, res) => {
         }
         // Status update if provided
         if (status !== undefined) {
-            const allowedStatus = [
-              "LEAD","DESIGN","QUOTATION","10% TOKEN","FINAL MEASUREMENT","FINAL DRAWINGS",
-              "50% PAYMENT","FACTORY ORDER","SITE READY CHECK","FACTORY FULL PAYMENT","DISPATCH",
-              "90% CLIENT PAYMENT","INSTALLATION","QUALITY CHECK","HANDOVER","10% FINAL PAYMENT","AFTER SALES"
-            ];
-            if (!allowedStatus.includes(status)) {
-                return res.status(400).json({ message: "Invalid status" });
-            }
             project.status = status;
         }
 
