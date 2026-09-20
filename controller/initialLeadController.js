@@ -53,6 +53,7 @@ const createInitalLead = async (req, res) => {
         expectedTimelineStart: expectedTimelineStart ? new Date(expectedTimelineStart) : null,
         expectedTimelineEnd: expectedTimelineEnd ? new Date(expectedTimelineEnd) : null,
         notes: notes || "",
+        priority: req.body.priority || "none",
         assignedRoles: visibleTo,
       });
     await newLead.save();
@@ -134,7 +135,8 @@ const updateInitialLead = async (req, res) => {
         lead.leadSource = leadSource || lead.leadSource;
         lead.expectedTimelineStart = expectedTimelineStart ? new Date(expectedTimelineStart) : lead.expectedTimelineStart;
         lead.expectedTimelineEnd = expectedTimelineEnd ? new Date(expectedTimelineEnd) : lead.expectedTimelineEnd;
-        lead.notes = notes || lead.notes;
+        lead.notes = notes !== undefined ? notes : lead.notes;
+        lead.priority = req.body.priority !== undefined ? req.body.priority : lead.priority;
         // If architect fields changed, try registering new architect silently
         if (architectName || architectContact) {
           await tryCreateArchitect({ architectName: updatedArchitectName, architectContact: updatedArchitectContact, architectAddress: updatedArchitectAddress, architectCategory: req.body.architectCategory || "" });

@@ -50,6 +50,11 @@ const initalLeadSchema = new Schema({
     type: String,
     // additional notes about the lead
   },
+  priority: {
+    type: String,
+    enum: ["none", "low", "med", "high"],
+    default: "none",
+  },
   assignedRoles: {
     type: [String],
     default: [],
