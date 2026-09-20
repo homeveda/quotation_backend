@@ -81,60 +81,27 @@ const getDesigns = async (req, res) => {
 
 const createDesign = async (req, res) => {
   try {
-    const { projectId } = req.body;
-    // console.log(req.body)
+    const { projectId, items } = req.body;
+    
     if (!projectId) {
       return res.status(400).json({ message: "projectId is required" });
     }
-    // ✅ Correct project check
-    const projectExists = await Project.find({id:projectId});
-    if (!projectExists) {
-          return res.status(400).json({ message: "Invalid projectId" });
-    }
     
-    const itemsMap = {};
+    // ✅ Correct project check
+    const projectExists = await Project.findOne({ id: projectId });
+    if (!projectExists) {
+      return res.status(400).json({ message: "Invalid projectId" });
+    }
 
-    // ✅ 1. Extract item names
-
-    req.body.items.forEach((item, index) => {
-        console.log(item.name);
-        const {name} = item;
-        itemsMap[index] = { name };
-       
-    })
-    console.log(itemsMap);
-
-    if (Object.keys(itemsMap).length === 0) {
+    if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: "No items provided" });
     }
 
-    // ✅ 2. Handle files (images, PDFs, docs)
-    for (const file of req.files || []) {
-      const match = file.fieldname.match(/items\[(\d+)\]\[(image|design)\]/);
-      if (!match) continue;
-
-      const index = match[1];
-      const type = match[2];
-
-      if (!itemsMap[index]) itemsMap[index] = {};
-
-      const url = await uploadFileToS3(file, projectId);
-      const fileType = getFileType(file.mimetype);
-
-      if (type === "image") {
-        itemsMap[index].imageLink = url;
-        itemsMap[index].imageFileType = fileType;
-      }
-      if (type === "design") {
-        itemsMap[index].designLink = url;
-        itemsMap[index].designFileType = fileType;
-      }
-    }
-
+    // items should already contain name, imageLink, imageFileType, designLink, designFileType from the frontend
     // ✅ 3. Save to DB
     const design = await Design.create({
       projectId,
-      items: Object.values(itemsMap),
+      items,
     });
 
     return res.status(201).json({ success: true, design });
@@ -159,22 +126,17 @@ const updateDesignItem = async (req, res) => {
         // Update name if provided
         if (req.body.name) item.name = req.body.name;
 
-        // Accept files as multipart fields `image` and `design` (single files)
-        const imageFile = (req.files && req.files.image && req.files.image[0]) || null;
-        const designFile = (req.files && req.files.design && req.files.design[0]) || null;
-
-        if (imageFile) {
-            // delete old file from S3 (best effort)
-            if (item.imageLink) await deleteFileFromS3(item.imageLink);
-            const url = await uploadFileToS3(imageFile, design.projectId || design._id.toString());
-            item.imageLink = typeof url === 'string' ? url : item.imageLink;
-            item.imageFileType = getFileType(imageFile.mimetype);
+        // Accept files links from frontend directly
+        if (req.body.imageLink) {
+            if (item.imageLink && item.imageLink !== req.body.imageLink) await deleteFileFromS3(item.imageLink);
+            item.imageLink = req.body.imageLink;
+            if (req.body.imageFileType) item.imageFileType = req.body.imageFileType;
         }
-        if (designFile) {
-            if (item.designLink) await deleteFileFromS3(item.designLink);
-            const url = await uploadFileToS3(designFile, design.projectId || design._id.toString());
-            item.designLink = typeof url === 'string' ? url : item.designLink;
-            item.designFileType = getFileType(designFile.mimetype);
+        
+        if (req.body.designLink) {
+            if (item.designLink && item.designLink !== req.body.designLink) await deleteFileFromS3(item.designLink);
+            item.designLink = req.body.designLink;
+            if (req.body.designFileType) item.designFileType = req.body.designFileType;
         }
 
         await design.save();

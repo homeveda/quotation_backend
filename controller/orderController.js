@@ -79,7 +79,7 @@ const getOrders = async (req, res) => {
   }
 };
 
-// POST: Upload file(s) to a project's orders
+// POST: Add order items (from frontend-uploaded S3 URLs)
 const createOrder = async (req, res) => {
   try {
     const { projectId } = req.params;
@@ -87,43 +87,26 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: "projectId is required" });
     }
 
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "At least one file is required" });
-    }
-
-    const newItems = [];
-
-    for (const file of req.files) {
-      try {
-        const fileUrl = await uploadOrderFile(file, projectId);
-        newItems.push({
-          fileLink: fileUrl,
-          fileType: getFileType(file.mimetype),
-        });
-      } catch (uploadErr) {
-        console.error("❌ Failed to upload order file:", uploadErr);
-        return res.status(500).json({
-          message: "File upload to S3 failed",
-          error: uploadErr.message,
-        });
-      }
+    const { items } = req.body;
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: "At least one item is required" });
     }
 
     // Find existing order document or create new one
     let order = await Order.findOne({ projectId });
 
     if (order) {
-      order.items.push(...newItems);
+      order.items.push(...items);
       await order.save();
     } else {
       order = new Order({
         projectId,
-        items: newItems,
+        items,
       });
       await order.save();
     }
 
-    res.status(201).json({ message: "Order files uploaded successfully", order });
+    res.status(201).json({ message: "Order records created successfully", order });
   } catch (err) {
     console.error("Error creating order:", err);
     res.status(500).json({ message: "Server Error" });

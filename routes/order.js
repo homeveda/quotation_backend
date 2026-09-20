@@ -1,5 +1,5 @@
 import express from 'express';
-import { orderFileUpload } from '../middleware/uploadMiddleware.js';
+
 import {
   getOrders,
   createOrder,
@@ -12,8 +12,8 @@ const router = express.Router();
 // GET: Fetch all order files for a project
 router.get('/:projectId', getOrders);
 
-// POST: Upload order files (PDF, DOC, XLSX, images — up to 10 at once)
-router.post('/:projectId', orderFileUpload, createOrder);
+// POST: Create order records from frontend-uploaded S3 URLs
+router.post('/:projectId', createOrder);
 
 // DELETE: Delete a specific order file
 router.delete('/:projectId/:itemId', deleteOrder);
