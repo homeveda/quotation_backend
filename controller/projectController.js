@@ -1,4 +1,5 @@
 import Project from "../model/projectModel.js";
+import ProjectInspection from "../model/inspectionModel.js";
 import { v4 as UUIDV4} from 'uuid';
 import { PutObjectCommand,DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "../config/aws.js";
@@ -421,7 +422,34 @@ const toggleIsActive = async (req, res) => {
 const getActiveProjects = async (req, res) => {
     try {
         const projects = await Project.find({ isActive: true });
-        res.status(200).json({ projects });
+
+        if (projects.length === 0) {
+            return res.status(200).json({ projects: [] });
+        }
+
+        // Collect all project IDs and batch-fetch ALL inspections in ONE query
+        const projectIds = projects.map(p => p.id || p._id.toString());
+        const allInspections = await ProjectInspection.find({
+            projectId: { $in: projectIds }
+        });
+
+        // Group inspections by projectId in memory
+        const inspMap = {};
+        allInspections.forEach(insp => {
+            const pid = insp.projectId;
+            if (!inspMap[pid]) inspMap[pid] = [];
+            inspMap[pid].push(insp);
+        });
+
+        // Attach inspections to each project
+        const projectsWithInspections = projects.map(p => {
+            const pid = p.id || p._id.toString();
+            const obj = p.toObject();
+            obj.inspections = inspMap[pid] || [];
+            return obj;
+        });
+
+        res.status(200).json({ projects: projectsWithInspections });
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server Error" });
