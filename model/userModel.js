@@ -39,6 +39,10 @@ const userSchema = new Schema({
   assignedRoles: {
     type: [String],
     default: [],
+  },
+  notes: {
+    type: String,
+    default: "",
   }
 }, { timestamps: true });
 

@@ -413,4 +413,19 @@ const getUsersWithInactiveProjects = async(req,res)=>{
     }
 }
 
-export { registerUser, registerAdmin, getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers, getAllAdmins, updateAdminRole, deleteAdmin, loginUser ,loginAdmin, resetPassword, userDetails, getUsersWithInactiveProjects };
+const updateUserNotes = async (req, res) => {
+    try {
+        const { email, notes } = req.body;
+        if (!email) return res.status(400).json({ message: "email is required" });
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+        user.notes = notes ?? "";
+        await user.save();
+        res.status(200).json({ message: "Notes updated successfully", notes: user.notes });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+export { registerUser, registerAdmin, getUserDetails, changePassword, updateUserDetails, forgotPassword, deleteUser, getAllUsers, getAllAdmins, updateAdminRole, deleteAdmin, loginUser, loginAdmin, resetPassword, userDetails, getUsersWithInactiveProjects, updateUserNotes };

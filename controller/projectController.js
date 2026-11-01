@@ -1,7 +1,8 @@
 import Project from "../model/projectModel.js";
 import ProjectInspection from "../model/inspectionModel.js";
 import { v4 as UUIDV4} from 'uuid';
-import { PutObjectCommand,DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3 } from "../config/aws.js";
 
 const uploadFile = async (file, projectid) => {
@@ -53,7 +54,41 @@ const deleteS3Object = async (key) => {
   }
 };
 
+/**
+ * POST /project/presign
+ * Body: { projectId, filename, contentType }
+ * Returns: { uploadUrl, fileUrl } — uploadUrl is a 15-min presigned S3 PUT URL,
+ *           fileUrl is the final public URL to store in the DB.
+ */
+const getPresignedUploadUrl = async (req, res) => {
+  try {
+    const { projectId, filename, contentType } = req.body;
+    if (!projectId || !filename || !contentType) {
+      return res.status(400).json({ message: "projectId, filename, and contentType are required" });
+    }
+    const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME;
+    const safeFilename = `${Date.now()}-${filename}`.replace(/\s+/g, "_");
+    const key = `projects/${projectId}/plan/${safeFilename}`;
+
+    const command = new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      ContentType: contentType,
+      ACL: "public-read",
+    });
+
+    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 900 }); // 15 min
+    const fileUrl = `https://${bucket}.s3.${process.env.AWS_REGION_HV}.amazonaws.com/${key}`;
+
+    return res.status(200).json({ uploadUrl, fileUrl });
+  } catch (err) {
+    console.error("❌ Presign failed:", err);
+    return res.status(500).json({ message: "Failed to generate presigned URL", error: err.message });
+  }
+};
+
 const getProjectsOfUser = async (req, res) => {
+
     try {
         // Expect userEmail as query param: /user?userEmail=foo@x.com
         const userEmail = req.query.userEmail;
@@ -122,26 +157,33 @@ const createProject = async (req, res) => {
 
         // If files are uploaded (multer memoryStorage), upload to S3
         console.log("Files received:", req.files);
+        // Support files uploaded via multer (small) OR presigned URLs (large, uploaded directly to S3)
+        const presignedUrls = parseJSONField(req.body.presignedUrls) || [];
+        const allUploadedUrls = Array.isArray(presignedUrls) ? [...presignedUrls] : [];
+
         if (req.files && req.files.length > 0) {
-            const uploadedUrls = [];
             for (const file of req.files) {
                 try {
                     const fileUrl = await uploadFile(file, id);
-                    uploadedUrls.push(fileUrl);
+                    allUploadedUrls.push(fileUrl);
                 } catch (uploadErr) {
                     console.error("❌ Failed to upload file:", uploadErr);
                     return res.status(500).json({ message: "File upload to S3 failed", error: uploadErr.message });
                 }
             }
+        }
+
+        if (allUploadedUrls.length > 0) {
             // attach files to appropriate field: if kitchen exists use kitchen.layoutPlan else wardrobe.measureents
             if (kitchen) {
                 projectData.kitchen = projectData.kitchen || {};
-                projectData.kitchen.layoutPlan = uploadedUrls;
+                projectData.kitchen.layoutPlan = allUploadedUrls;
             } else if (wardrobe) {
                 projectData.wardrobe = projectData.wardrobe || {};
-                projectData.wardrobe.measureents = uploadedUrls;
+                projectData.wardrobe.measureents = allUploadedUrls;
             }
         }
+
 
         const newProject = new Project(projectData);
         await newProject.save();
@@ -266,8 +308,9 @@ const updateProject = async (req, res) => {
             existingFiles = existingFiles.filter(url => !removeFiles.includes(url));
         }
 
-        // If files uploaded, upload to S3
-        const uploadedUrls = [];
+        // Support files uploaded via multer (small) OR presigned URLs (large, uploaded directly to S3)
+        const presignedUrls = parseJSONField(req.body.presignedUrls) || [];
+        const uploadedUrls = Array.isArray(presignedUrls) ? [...presignedUrls] : [];
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
                 try {
@@ -456,4 +499,4 @@ const getActiveProjects = async (req, res) => {
     }
 };
 
-export { getProjectsOfUser, createProject, updateProject, getProjectDetails, deleteProject, deleteProjectFile, toggleIsActive, getActiveProjects };
+export { getProjectsOfUser, createProject, updateProject, getProjectDetails, deleteProject, deleteProjectFile, toggleIsActive, getActiveProjects, getPresignedUploadUrl };

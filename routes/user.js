@@ -1,6 +1,6 @@
 import { Router } from "express";
 const userRouter = Router();
-import { registerUser, registerAdmin, changePassword, updateUserDetails, userDetails, forgotPassword, deleteUser, getAllUsers, getAllAdmins, updateAdminRole, deleteAdmin, loginUser, loginAdmin, resetPassword, getUsersWithInactiveProjects } from "../controller/userController.js";
+import { registerUser, registerAdmin, changePassword, updateUserDetails, userDetails, forgotPassword, deleteUser, getAllUsers, getAllAdmins, updateAdminRole, deleteAdmin, loginUser, loginAdmin, resetPassword, getUsersWithInactiveProjects, updateUserNotes } from "../controller/userController.js";
 import checkAdmin from "../middleware/checkAdmin.js";
 import checkSuperAdmin from "../middleware/checkSuperAdmin.js";
 
@@ -14,6 +14,8 @@ userRouter.post('/change-password', changePassword);
 userRouter.post('/login', loginUser);
 // Update user details with email in body
 userRouter.patch('/', updateUserDetails);
+// Update user notes (admin)
+userRouter.patch('/notes', updateUserNotes);
 // Delete user with email in body
 userRouter.delete('/', deleteUser);
 

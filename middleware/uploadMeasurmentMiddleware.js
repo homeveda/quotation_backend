@@ -2,15 +2,23 @@ import multer from "multer";
 
 const storage = multer.memoryStorage();
 
-// Whitelist: images + PDF + DOC/DOCX
+// Whitelist: images + PDF + DOC/DOCX + XLS/XLSX + Videos
 const ALLOWED_MIMETYPES = [
     "image/png",
     "image/jpeg",
     "image/jpg",
     "image/webp",
+    "image/gif",
     "application/pdf",
     "application/msword",                                                       // .doc
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",   // .docx
+    "application/vnd.ms-excel",                                                  // .xls
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",         // .xlsx
+    "video/mp4",
+    "video/quicktime",
+    "video/x-msvideo",
+    "video/x-matroska",
+    "video/webm",
 ];
 
 const fileFilter = (req, file, cb) => {
