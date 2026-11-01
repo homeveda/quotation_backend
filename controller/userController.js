@@ -373,9 +373,22 @@ const getUsersWithInactiveProjects = async(req,res)=>{
         // Get unique user emails from inactive projects
         const inactiveProjectUserEmails = [...new Set(inactiveProjects.map(project => project.userEmail))];
         
-        // Find all projects to get users who have projects
+        // Find all projects to get users who have projects and PPT uploads
         const allProjects = await Project.find({});
         const usersWithProjects = new Set(allProjects.map(project => project.userEmail));
+        const usersWithPptProjectFiles = new Set(
+            allProjects
+                .filter((project) => {
+                    const uploadedFiles = [
+                        ...(Array.isArray(project?.kitchen?.layoutPlan) ? project.kitchen.layoutPlan : []),
+                        ...(Array.isArray(project?.wardrobe?.measureents) ? project.wardrobe.measureents : []),
+                    ];
+                    return uploadedFiles.some(
+                        (fileUrl) => typeof fileUrl === "string" && /\.pptx?(?:[?#].*)?$/i.test(fileUrl)
+                    );
+                })
+                .map(project => project.userEmail)
+        );
         
         // Find all non-admin users based on role
         let allUsers;
@@ -406,7 +419,12 @@ const getUsersWithInactiveProjects = async(req,res)=>{
             return res.status(404).json({ message: "No users found" });
         }
         
-        res.status(200).json({ users: filteredUsers });
+        const users = filteredUsers.map((user) => ({
+            ...user.toObject(),
+            hasPptProjectFile: usersWithPptProjectFiles.has(user.email),
+        }));
+
+        res.status(200).json({ users });
     }catch(err){
         console.log(err);
         res.status(500).json({message: "Server Error"});

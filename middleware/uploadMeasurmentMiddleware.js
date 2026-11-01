@@ -2,7 +2,7 @@ import multer from "multer";
 
 const storage = multer.memoryStorage();
 
-// Whitelist: images + PDF + DOC/DOCX + XLS/XLSX + Videos
+// Whitelist: images + PDF + DOC/DOCX + XLS/XLSX + PPT/PPTX + Videos
 const ALLOWED_MIMETYPES = [
     "image/png",
     "image/jpeg",
@@ -14,6 +14,8 @@ const ALLOWED_MIMETYPES = [
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",   // .docx
     "application/vnd.ms-excel",                                                  // .xls
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",         // .xlsx
+    "application/vnd.ms-powerpoint",                                             // .ppt
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation", // .pptx
     "video/mp4",
     "video/quicktime",
     "video/x-msvideo",
